@@ -38,6 +38,10 @@ flowchart LR
 
 The visitor chooses what the drop asks of me: one push-up, one minute of guitar or one minute of studying AWS. The site shows a public scoreboard of what I owe and what I have done. A private page, authenticated with the same token, records practice that was really done, and the API refuses to mark more than visitors have asked for.
 
+## Five secrets in the sky
+
+Five things are hidden across the day: the cloud, the sun, a passing plane, the cables and the moon. Each one answers at once and does not depend on the phone.
+
 ## How a drop travels
 
 1. The visitor lets go of a drop. Lambda adds one to the counter and stores the drop in a pending queue.

@@ -97,6 +97,15 @@
       asleep: 'The phone is asleep. Last heard {t}. Your drop will wait for it.',
       never: 'The phone hasn\'t woken up yet. Your drop will wait for it.',
       falling: 'Falling toward Culiacán.',
+      reached: 'It reached AWS in {ms} ms. Now it is waiting for the phone in Culiacán.',
+      secretsCount: 'Hidden in this sky: {n} of 5',
+      secretsHint: 'Five things are hidden across the day. Look up, touch what catches your eye and keep scrolling.',
+      secretsDone: 'You found all five. One last thing I believe: if I practice, I can.',
+      sec_cloud: 'You touched the cloud, and it moved.',
+      sec_sun: 'This sun is code. There are no images or video in this sky: your device paints all of it.',
+      sec_plane: 'You caught the plane. It crosses the sky every 95 seconds, and it is easy to miss.',
+      sec_cables: 'The cloud is not in the sky. It runs through cables like these, all the way to my room.',
+      sec_moon: 'This moonlight is the same one you see on the water of my phone.',
       waiting: 'Drop {n} is waiting for the phone to wake up. I already owe you {ask}.',
       landed: 'Drop {n} landed in Culiacán after {s} s. I owe you {ask}.',
       failed: 'The drop did not reach AWS. Check your connection and let go of another one.',
@@ -129,6 +138,15 @@
       asleep: 'El teléfono está dormido. Reportó {t}. Tu gota lo esperará.',
       never: 'El teléfono aún no despierta. Tu gota lo esperará.',
       falling: 'Cayendo hacia Culiacán.',
+      reached: 'Llegó a AWS en {ms} ms. Ahora espera al teléfono en Culiacán.',
+      secretsCount: 'Escondidos en este cielo: {n} de 5',
+      secretsHint: 'Hay cinco cosas escondidas a lo largo del día. Mira arriba, toca lo que te llame la atención y sigue bajando.',
+      secretsDone: 'Encontraste las cinco. Una última cosa en la que creo: si practico, puedo.',
+      sec_cloud: 'Tocaste la nube, y se movió.',
+      sec_sun: 'Este sol es código. En este cielo no hay imágenes ni video: tu dispositivo lo pinta todo.',
+      sec_plane: 'Atrapaste el avión. Cruza el cielo cada 95 segundos y es fácil no verlo.',
+      sec_cables: 'La nube no está en el cielo. Corre por cables como estos, hasta llegar a mi cuarto.',
+      sec_moon: 'Esta luz de luna es la misma que ves sobre el agua de mi teléfono.',
       waiting: 'La gota {n} espera a que despierte el teléfono. Ya te debo {ask}.',
       landed: 'La gota {n} cayó en Culiacán después de {s} s. Te debo {ask}.',
       failed: 'La gota no llegó a AWS. Revisa tu conexión y suelta otra.',
@@ -189,6 +207,7 @@
     });
     try { localStorage.setItem('lang', lang); } catch (e) { /* optional */ }
     renderSound();
+    renderSecrets();
     renderStatus();
   }
 
@@ -244,6 +263,7 @@
       if (calm) sky.frame(20);
     }
     $('wires').style.opacity = Math.max(0, Math.min(1, (day - .56) / .16));
+    placeSpots(day);
     renderClock(day);
     document.querySelector('.top').classList.toggle('solid', y > innerHeight * .6);
     var active = '';
@@ -264,10 +284,57 @@
     if (!sky || now - lastTouch < 45) return;
     lastTouch = now;
     sky.touch(e.clientX, e.clientY);
-    if (++touched === 40) $('touchHint').classList.add('done');
+    if (++touched === 40) { $('touchHint').classList.add('done'); discover('cloud'); }
   }
   addEventListener('pointermove', feel, { passive: true });
   addEventListener('pointerdown', feel, { passive: true });
+
+  /* five things hidden across the day: instant, and independent of the phone */
+  var found = {}, SECRET_TOTAL = 5;
+  try { found = JSON.parse(localStorage.getItem('secrets') || '{}') || {}; } catch (e) { found = {}; }
+  function foundCount() { return Object.keys(found).length; }
+  function renderSecrets() {
+    var b = $('secrets'), n = foundCount();
+    b.textContent = say('secretsCount', { n: n });
+    b.classList.toggle('done', n >= SECRET_TOTAL);
+  }
+  function discover(id) {
+    var isNew = !found[id];
+    found[id] = 1;
+    try { localStorage.setItem('secrets', JSON.stringify(found)); } catch (e) { /* optional */ }
+    renderSecrets();
+    toast(say('sec_' + id));
+    plink();
+    if (isNew && foundCount() >= SECRET_TOTAL) setTimeout(function () { toast(say('secretsDone')); }, 5200);
+  }
+  function place(id, x, y, on) {
+    var s = $(id);
+    s.classList.toggle('on', on);
+    if (on) s.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)';
+  }
+  var dayNow = 0;
+  function placeSpots(day) {
+    dayNow = day;
+    var w = innerWidth, h = $('sky').clientHeight || innerHeight;
+    place('spotSun', w * .52, h * .1, day < .14);
+    place('spotMoon', w * .84, h * .2, day > .6 && day < .9);
+    var pole = $('pole').getBoundingClientRect();
+    place('spotCables', pole.left + pole.width / 2, pole.top + 70, day > .66 && pole.width > 0);
+  }
+  /* the same path the shader draws for the plane */
+  function trackPlane(now) {
+    var w = innerWidth, h = $('sky').clientHeight || innerHeight, A = w / h;
+    var ph = ((calm ? 20 : now / 1000) / 95) % 1;
+    var ux = -.72 * A + (1.58 * A) * ph, uy = -.02 + .44 * ph;
+    place('spotPlane', w / 2 + ux * h, h / 2 - uy * h, dayNow < .34 && ph > .02);
+    requestAnimationFrame(trackPlane);
+  }
+  [['spotSun', 'sun'], ['spotPlane', 'plane'], ['spotCables', 'cables'], ['spotMoon', 'moon']].forEach(function (p) {
+    $(p[0]).addEventListener('click', function () { discover(p[1]); });
+  });
+  $('secrets').addEventListener('click', function () {
+    toast(foundCount() >= SECRET_TOTAL ? say('secretsDone') : say('secretsHint'));
+  });
 
   /* sound: off until the visitor asks for it ----------------------------- */
   var soundOn = false, audio = null;
@@ -579,6 +646,7 @@
       body: JSON.stringify({ zone: zone(), lang: lang, kind: kind })
     }).then(function (r) { if (!r.ok) throw new Error('drop'); return r.json(); }).then(function (d) {
       var rtt = Math.round(performance.now() - t0), tm = d.timing || {};
+      d.rtt = rtt;
       state.mine[d.n] = true;
       step('browser', rtt + ' ms');
       setTimeout(function () { step('api', Math.max(0, rtt - (tm.lambdaMs || 0)) + ' ms'); }, 160);
@@ -595,6 +663,7 @@
         renderStatus();
         ripple();
         if (state.phone && state.phone.online) {
+          report(say('reached', { ms: d.rtt }));
           waitForLanding(d.id, d.n, kind);
         } else {
           report(say('waiting', { n: num(d.n), ask: say('ask' + kind) }));
@@ -662,6 +731,7 @@
   refresh();
   setInterval(refresh, 8000);
   requestAnimationFrame(loopScreen);
+  requestAnimationFrame(trackPlane);
   if (sky) { if (calm) sky.frame(20); else sky.start(); }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
   addEventListener('load', function () { measure(); onScroll(); });
