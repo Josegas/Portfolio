@@ -32,14 +32,14 @@
     'float A;',
     'float body(vec2 p,float s){',
     ' float h=-.4+.05*sin(p.x*1.1+s)+.03*sin(p.x*2.7+s*2.);',
-    ' float tall=clamp(A*.72+.08,.42,1.);',
+    ' float tall=clamp(A*.72+.08,.3,1.);',
     ' if(s<.5){',
     '  h+=.88*tall*tower(p,vec2(.33*A,-.4),vec2(.1*A+.13,.8));',
     '  h+=.42*tall*tower(p,vec2(.52*A,-.42),vec2(.09*A+.09,.54));',
     '  h+=.32*tower(p,vec2(.15*A,-.42),vec2(.08*A+.09,.42));',
     '  h+=.05*tower(p,vec2(-.3*A,-.42),vec2(.12*A+.1,.3));',
     ' }else if(s<1.5){',
-    '  h+=.34*tall*tower(p,vec2(.08*A,-.36),vec2(.1*A+.1,.46));',
+    '  h+=.24*tall*tower(p,vec2(.1*A,-.36),vec2(.1*A+.1,.46));',
     '  h+=.12*tower(p,vec2(-.3*A,-.36),vec2(.1*A+.08,.3));',
     ' }else{',
     '  h+=.13*tower(p,vec2(.12*A,-.26),vec2(.3*A+.1,.26));',
@@ -73,7 +73,7 @@
     '  float s=step(.982,r)*smoothstep(.34,.05,length(fract(g)-.5));',
     '  float tw2=.6+.4*sin(T*1.7+r*90.);c+=vec3(.85,.9,1.)*s*tw2*nightF*smoothstep(-.28,.25,uv.y);',
     '  float band=fbm(M*uv*2.+vec2(3.,1.));c+=vec3(.14,.17,.36)*smoothstep(.4,.74,band)*nightF*.55;',
-    '  vec2 mo=vec2(.52,.3);float m=length(uv-mo);c=mix(c,vec3(.93,.95,1.),smoothstep(.045,.041,m)*nightF);c+=vec3(.4,.5,.9)*exp(-m*7.)*.34*nightF;',
+    '  vec2 mo=vec2(.34*A,.3);float m=length(uv-mo);c=mix(c,vec3(.93,.95,1.),smoothstep(.045,.041,m)*nightF);c+=vec3(.4,.5,.9)*exp(-m*7.)*.34*nightF;',
     ' }',
 
     /* cloud palette */
@@ -124,7 +124,7 @@
     '  col+=sunC*.12*exp(-dS*1.5)*(1.-nightF);',
     /* air between the layers */
     '  col=mix(col,mix(low,mid,.4),s*.24);',
-    '  col*=1.-V*.42;',
+    '  col*=1.-V*.56;',
     '  c=mix(c,col,a);',
     ' }',
 

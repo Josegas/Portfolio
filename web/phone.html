@@ -10,7 +10,8 @@ html,body{margin:0;height:100%;background:#030920;color:#fff;font-family:serif;o
 canvas{position:fixed;top:0;left:0;width:100%;height:100%}
 #count{position:fixed;top:9%;left:0;right:0;text-align:center;font-size:52px;line-height:1}
 #label{position:fixed;top:9%;margin-top:62px;left:0;right:0;text-align:center;font-size:16px;opacity:.72}
-#msg{position:fixed;left:8%;right:8%;bottom:9%;text-align:center;font-size:21px;line-height:1.35;opacity:0;-webkit-transition:opacity .5s;transition:opacity .5s}
+#msg{position:fixed;left:6%;right:6%;top:40%;text-align:center;font-size:34px;line-height:1.25;opacity:0;-webkit-transition:opacity .4s;transition:opacity .4s}
+#awake{position:fixed;width:1px;height:1px;opacity:.01;left:0;top:0}
 #info{position:fixed;left:0;right:0;bottom:12px;text-align:center;font:12px sans-serif;opacity:.45}
 #start{position:fixed;top:0;left:0;right:0;bottom:0;background:#030920;display:none;text-align:center;padding:42% 10% 0;font-size:20px;line-height:1.4}
 </style>
@@ -22,9 +23,11 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
 <div id="msg"></div>
 <div id="info"></div>
 <div id="start">Toca la pantalla para despertar</div>
+<!-- a playing video keeps the screen on in browsers without the Wake Lock API -->
+<video id="awake" loop muted playsinline webkit-playsinline src="data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAJ/EU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHWTbuMU6uEElTDZ1OsggEnTbuMU6uEHFO7a1OsggJp7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsCrXsYMPQkBNgIxMYXZmNjEuMS4xMDBXQYxMYXZmNjEuMS4xMDBEiYhAr0AAAAAAABZUrmvMrgEAAAAAAABD14EBc8WI+i/5ibH70mucgQAitZyDdW5kiIEAhoVWX1ZQOYOBASPjg4QdzWUA4JSwgRC6gRCagQJVsIhVt4ECVbiBAhJUw2f+c3OfY8CAZ8iZRaOHRU5DT0RFUkSHjExhdmY2MS4xLjEwMHNz2WPAi2PFiPov+Ymx+9JrZ8ikRaOHRU5DT0RFUkSHl0xhdmM2MS4zLjEwMCBsaWJ2cHgtdnA5Z8ihRaOIRFVSQVRJT05Eh5MwMDowMDowNC4wMDAwMDAwMDAAH0O2dUC554EAo6GBAACAgkmDQgAA8AD2ADgkHBhCAAAwYAAAEL///YsqAACjk4EB9ACGAECSnABJQAADIAAAQkCjk4ED6ACGAECSnABKwAADIAAAQkCjk4EF3ACGAECSnABJwAADIAAAQkCjk4EH0ACGAECSnABIoAADIAAAQkCjk4EJxACGAECSnABHgAADIAAAQkCjk4ELuACGAECSnABG4AADIAAAQkCjk4ENrACGAECSnABGQAADIAAAQkAcU7trkbuPs4EAt4r3gQHxggGq8IED"></video>
 <script src="config.js"></script>
 <script>
-/* ES5 on purpose: this page runs on a browser from 2014.
+/* ES5 on purpose: this page runs on an old phone browser.
    No fetch, no promises, no arrow functions, no template strings. */
 (function () {
   'use strict';
@@ -32,7 +35,7 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
   var POLL_MS = 3000, BEAT_EVERY = 5;
   var canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
   var W = 0, H = 0, ripples = [], stars = [], polls = 0, started = Date.now();
-  var delivered = [], seen = {}, queue = [], audio = null, battery = -1, charging = false;
+  var delivered = [], seen = {}, queue = [], audio = null, battery = -1, charging = false, inflight = false;
 
   function byId(id) { return document.getElementById(id); }
 
@@ -133,12 +136,16 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
     msg.textContent = 'Gota ' + drop.n + (drop.place ? ', desde ' + drop.place : '');
     msg.style.opacity = 1;
     clearTimeout(land.t);
-    land.t = setTimeout(function () { msg.style.opacity = 0; }, 3500);
+    land.t = setTimeout(function () { msg.style.opacity = 0; }, 6500);
     delivered.push({ id: drop.id, sk: drop.sk });
+    confirmNow();
   }
 
   /* drops land one at a time, so a queue arrives like rain and not like a flood */
-  setInterval(function () { if (queue.length) land(queue.shift()); }, 1400);
+  var lastLand = 0;
+  setInterval(function () {
+    if (queue.length && Date.now() - lastLand >= 7000) { lastLand = Date.now(); land(queue.shift()); }
+  }, 250);
 
   function post(body, done) {
     var x = new XMLHttpRequest();
@@ -160,9 +167,22 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
     return c ? String(c.type || c.effectiveType || '') : '';
   }
 
+  /* report a landing the moment it happens, so the camera catches it on screen */
+  function confirmNow() {
+    if (inflight) return;
+    var sending = delivered.slice(0, 5);
+    inflight = true;
+    post({ token: token, landed: sending }, function (status) {
+      inflight = false;
+      if (status === 200) delivered.splice(0, sending.length);
+    });
+  }
+
   function poll() {
+    if (inflight) { setTimeout(poll, 300); return; }
     polls++;
     var sending = delivered.slice(0, 5);
+    inflight = true;
     var beat = polls % BEAT_EVERY === 1;
     post({
       token: token,
@@ -173,10 +193,12 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
       uptimeMs: Date.now() - started,
       landed: sending
     }, function (status, data) {
+      inflight = false;
       var info = byId('info');
       if (status === 200 && data) {
         delivered.splice(0, sending.length);
         byId('count').textContent = data.count;
+        byId('label').textContent = data.count === 1 ? 'gota en la nube' : 'gotas en la nube';
         info.textContent = 'en línea';
         var list = data.pending || [];
         for (var i = 0; i < list.length; i++) {
@@ -213,6 +235,7 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
     byId('start').style.display = 'none';
     beep();
     stayAwake();
+    try { byId('awake').play(); } catch (e) { /* the charger option still works */ }
     if (!token) { byId('info').textContent = 'falta el token en la URL'; return; }
     poll();
   });

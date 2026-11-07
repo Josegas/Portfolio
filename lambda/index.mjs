@@ -4,8 +4,10 @@
 
    POST /api/drop        public    create a drop
    GET  /api/drop/{id}   public    has it landed yet?
-   GET  /api/sky         public    counters and phone status
+   GET  /api/photo/{id}  public    the real photo of a landed drop
+   GET  /api/sky         public    counters, recent drops and phone status
    POST /api/phone       token     heartbeat, deliveries and pending drops
+   POST /api/camera      token     photographs the phone when a drop lands
    GET  /api/health      public    liveness
 */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -17,18 +19,26 @@ import {
   QueryCommand,
   UpdateCommand
 } from '@aws-sdk/lib-dynamodb';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: { removeUndefinedValues: true }
 });
 
+const s3 = new S3Client({});
+
 const TABLE = process.env.TABLE;
+const BUCKET = process.env.BUCKET;
 const TOKEN = process.env.PHONE_TOKEN || '';
 const ALLOW = process.env.ALLOWED_ORIGIN || '*';
 const ONLINE_MS = 30000;
+const SHOT_MAX_AGE_MS = 25000;
+const PHOTO_MAX_BYTES = 1200000;
+const ID = /^[0-9a-f-]{36}$/;
 const META = { pk: 'meta', sk: 'sky' };
 const PHONE = { pk: 'meta', sk: 'phone' };
+const CAMERA = { pk: 'meta', sk: 'camera' };
 
 const HEADERS = {
   'content-type': 'application/json; charset=utf-8',
@@ -86,11 +96,14 @@ function validToken(value) {
 }
 
 async function createDrop(event) {
+  const started = Date.now();
   const body = parse(event);
   const zone = cleanZone(body.zone);
+  const place = placeName(zone);
   const now = Date.now();
   const id = randomUUID();
 
+  const dbStart = Date.now();
   const { Attributes } = await ddb.send(new UpdateCommand({
     TableName: TABLE,
     Key: META,
@@ -100,26 +113,66 @@ async function createDrop(event) {
     ReturnValues: 'UPDATED_NEW'
   }));
   const n = Attributes.count;
-  const sk = `${String(now).padStart(15, '0')}#${id}`;
+  const stamp = String(now).padStart(15, '0');
 
-  await ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'drop', sk: id, n, at: now, zone } }));
-  await ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'pending', sk, id, n, at: now, place: placeName(zone) } }));
+  await Promise.all([
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'drop', sk: id, n, at: now, zone } })),
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'pending', sk: `${stamp}#${id}`, id, n, at: now, place } })),
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'recent', sk: `${stamp}#${id}`, n, at: now, place } }))
+  ]);
+  const dynamoMs = Date.now() - dbStart;
 
   metric('DropCreated', 1, 'Count', { zone });
-  return reply(201, { id, n });
+  return reply(201, { id, n, timing: { lambdaMs: Date.now() - started, dynamoMs } });
 }
 
 async function readDrop(id) {
-  if (!/^[0-9a-f-]{36}$/.test(id)) return reply(400, { error: 'bad id' });
+  if (!ID.test(id)) return reply(400, { error: 'bad id' });
   const { Item } = await ddb.send(new GetCommand({ TableName: TABLE, Key: { pk: 'drop', sk: id } }));
   if (!Item) return reply(404, { error: 'not found' });
-  return reply(200, { n: Item.n, at: Item.at, landedAt: Item.landedAt || 0, landedMs: Item.landedMs ?? -1 });
+  return reply(200, {
+    n: Item.n,
+    at: Item.at,
+    landedAt: Item.landedAt || 0,
+    landedMs: Item.landedMs ?? -1,
+    photo: Item.photo === true
+  });
+}
+
+async function readPhoto(id) {
+  if (!ID.test(id)) return reply(400, { error: 'bad id' });
+  try {
+    const { Body } = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: `drops/${id}.jpg` }));
+    const bytes = await Body.transformToByteArray();
+    return {
+      statusCode: 200,
+      isBase64Encoded: true,
+      headers: {
+        'content-type': 'image/jpeg',
+        'cache-control': 'public, max-age=31536000, immutable',
+        'access-control-allow-origin': ALLOW
+      },
+      body: Buffer.from(bytes).toString('base64')
+    };
+  } catch (err) {
+    /* without ListBucket, S3 answers AccessDenied for a key that does not exist */
+    if (err.name === 'NoSuchKey' || err.name === 'AccessDenied') return reply(404, { error: 'not found' });
+    throw err;
+  }
 }
 
 async function readSky() {
-  const [meta, phone] = await Promise.all([
+  const [meta, phone, camera, recent] = await Promise.all([
     ddb.send(new GetCommand({ TableName: TABLE, Key: META })),
-    ddb.send(new GetCommand({ TableName: TABLE, Key: PHONE }))
+    ddb.send(new GetCommand({ TableName: TABLE, Key: PHONE })),
+    ddb.send(new GetCommand({ TableName: TABLE, Key: CAMERA })),
+    ddb.send(new QueryCommand({
+      TableName: TABLE,
+      KeyConditionExpression: 'pk = :p',
+      ExpressionAttributeValues: { ':p': 'recent' },
+      ScanIndexForward: false,
+      Limit: 5
+    }))
   ]);
   const now = Date.now();
   const p = phone.Item;
@@ -127,7 +180,11 @@ async function readSky() {
     now,
     count: meta.Item?.count || 0,
     places: meta.Item?.places ? meta.Item.places.size : 0,
+    blocked: meta.Item?.blocked || 0,
     lastLandedAt: meta.Item?.lastLandedAt || 0,
+    lastPhoto: meta.Item?.lastPhoto || null,
+    cameraOnline: !!camera.Item && now - camera.Item.lastSeen < ONLINE_MS,
+    recent: (recent.Items || []).map((d) => ({ n: d.n, at: d.at, place: d.place })),
     phone: p
       ? {
           online: now - p.lastSeen < ONLINE_MS,
@@ -139,7 +196,7 @@ async function readSky() {
   });
 }
 
-async function markLanded(item, now) {
+async function markLanded(item, now, cameraOn) {
   try {
     const { Attributes } = await ddb.send(new UpdateCommand({
       TableName: TABLE,
@@ -151,6 +208,12 @@ async function markLanded(item, now) {
       ReturnValues: 'ALL_NEW'
     }));
     metric('DropLanded', Attributes.landedMs, 'Milliseconds');
+    if (cameraOn) {
+      await ddb.send(new PutCommand({
+        TableName: TABLE,
+        Item: { pk: 'shot', sk: String(item.id), n: Attributes.n, place: placeName(Attributes.zone || ''), at: now }
+      }));
+    }
   } catch (err) {
     /* the phone may report a delivery twice after a failed response */
     if (err.name !== 'ConditionalCheckFailedException') throw err;
@@ -158,15 +221,29 @@ async function markLanded(item, now) {
   await ddb.send(new DeleteCommand({ TableName: TABLE, Key: { pk: 'pending', sk: String(item.sk) } }));
 }
 
+async function reject() {
+  metric('TokenRejected');
+  const { Attributes } = await ddb.send(new UpdateCommand({
+    TableName: TABLE,
+    Key: META,
+    UpdateExpression: 'ADD blocked :one',
+    ExpressionAttributeValues: { ':one': 1 },
+    ReturnValues: 'UPDATED_NEW'
+  }));
+  return reply(401, { error: 'unauthorized', blocked: Attributes.blocked });
+}
+
 async function phoneCall(event) {
   const body = parse(event);
-  if (!validToken(body.token)) return reply(401, { error: 'unauthorized' });
+  if (!validToken(body.token)) return reject();
 
   const now = Date.now();
   const landed = Array.isArray(body.landed) ? body.landed.slice(0, 5) : [];
 
   if (landed.length) {
-    await Promise.all(landed.map((item) => markLanded(item, now)));
+    const camera = await ddb.send(new GetCommand({ TableName: TABLE, Key: CAMERA }));
+    const cameraOn = !!camera.Item && now - camera.Item.lastSeen < ONLINE_MS;
+    await Promise.all(landed.map((item) => markLanded(item, now, cameraOn)));
     await ddb.send(new UpdateCommand({
       TableName: TABLE,
       Key: META,
@@ -208,6 +285,53 @@ async function phoneCall(event) {
   });
 }
 
+async function cameraCall(event) {
+  const body = parse(event);
+  if (!validToken(body.token)) return reject();
+
+  const now = Date.now();
+  await ddb.send(new PutCommand({ TableName: TABLE, Item: { ...CAMERA, lastSeen: now } }));
+
+  if (body.photo && ID.test(String(body.photo.id))) {
+    const id = String(body.photo.id);
+    const jpeg = Buffer.from(String(body.photo.jpeg || ''), 'base64');
+    const isJpeg = jpeg.length > 3 && jpeg[0] === 0xff && jpeg[1] === 0xd8;
+    if (!isJpeg || jpeg.length > PHOTO_MAX_BYTES) return reply(400, { error: 'bad photo' });
+
+    await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: `drops/${id}.jpg`, Body: jpeg, ContentType: 'image/jpeg' }));
+    const { Attributes } = await ddb.send(new UpdateCommand({
+      TableName: TABLE,
+      Key: { pk: 'drop', sk: id },
+      UpdateExpression: 'SET photo = :t',
+      ConditionExpression: 'attribute_exists(pk)',
+      ExpressionAttributeValues: { ':t': true },
+      ReturnValues: 'ALL_NEW'
+    }));
+    await Promise.all([
+      ddb.send(new UpdateCommand({
+        TableName: TABLE,
+        Key: META,
+        UpdateExpression: 'SET lastPhoto = :p',
+        ExpressionAttributeValues: { ':p': { id, n: Attributes.n, at: now, place: placeName(Attributes.zone || '') } }
+      })),
+      ddb.send(new DeleteCommand({ TableName: TABLE, Key: { pk: 'shot', sk: id } }))
+    ]);
+    metric('PhotoTaken');
+  }
+
+  const { Items = [] } = await ddb.send(new QueryCommand({
+    TableName: TABLE,
+    KeyConditionExpression: 'pk = :p',
+    ExpressionAttributeValues: { ':p': 'shot' },
+    Limit: 3
+  }));
+  const fresh = Items.filter((d) => now - d.at < SHOT_MAX_AGE_MS);
+  const stale = Items.filter((d) => now - d.at >= SHOT_MAX_AGE_MS);
+  await Promise.all(stale.map((d) => ddb.send(new DeleteCommand({ TableName: TABLE, Key: { pk: 'shot', sk: d.sk } }))));
+
+  return reply(200, { now, shots: fresh.map((d) => ({ id: d.sk, n: d.n, place: d.place })) });
+}
+
 export const handler = async (event) => {
   const method = event.requestContext?.http?.method || 'GET';
   const path = event.rawPath || '/';
@@ -220,6 +344,8 @@ export const handler = async (event) => {
     if (method === 'POST' && path === '/api/drop') return await createDrop(event);
     if (method === 'GET' && path.startsWith('/api/drop/')) return await readDrop(path.slice('/api/drop/'.length));
     if (method === 'POST' && path === '/api/phone') return await phoneCall(event);
+    if (method === 'POST' && path === '/api/camera') return await cameraCall(event);
+    if (method === 'GET' && path.startsWith('/api/photo/')) return await readPhoto(path.slice('/api/photo/'.length));
     return reply(404, { error: 'not found' });
   } catch (err) {
     console.error(JSON.stringify({ level: 'error', name: err.name, message: err.message, path }));

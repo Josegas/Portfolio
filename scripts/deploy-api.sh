@@ -16,7 +16,7 @@ ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 ROLE_ARN="arn:aws:iam::$ACCOUNT:role/portfolio-api-role"
 TOKEN="$(tr -d '[:space:]' < "$ROOT/.secrets/sensor-token.txt")"
 ORIGIN="${ALLOWED_ORIGIN:-*}"
-ENV_VARS="Variables={TABLE=$TABLE,PHONE_TOKEN=$TOKEN,ALLOWED_ORIGIN=$ORIGIN}"
+ENV_VARS="Variables={TABLE=$TABLE,BUCKET=portfolio-drops-$ACCOUNT,PHONE_TOKEN=$TOKEN,ALLOWED_ORIGIN=$ORIGIN}"
 
 echo "== table"
 if ! aws dynamodb describe-table --table-name "$TABLE" --region "$REGION" >/dev/null 2>&1; then
@@ -42,7 +42,7 @@ if aws lambda get-function --function-name "$FUNCTION" --region "$REGION" >/dev/
 else
   aws lambda create-function --function-name "$FUNCTION" --region "$REGION" \
     --runtime nodejs22.x --architectures arm64 --handler index.handler \
-    --memory-size 256 --timeout 8 \
+    --memory-size 256 --timeout 10 \
     --role "$ROLE_ARN" --zip-file "fileb://$BUILD/api.zip" \
     --environment "$ENV_VARS" \
     --tags project=portfolio --query FunctionArn --output text

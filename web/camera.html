@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cámara de la gota</title>
+<style>
+body { margin: 0; background: #050b26; color: #fff; font: 16px/1.5 system-ui, sans-serif; text-align: center; }
+video { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #000; }
+button { margin: 16px; padding: 12px 24px; font: 700 17px system-ui; border: 0; border-radius: 999px; cursor: pointer; }
+p { margin: 8px 16px; }
+#state { font-weight: 700; }
+</style>
+</head>
+<body>
+<video id="v" autoplay playsinline muted></video>
+<button id="go" type="button">Encender cámara</button>
+<p id="state">Apagada</p>
+<p>Encuadra solo el LG. Solo se toma una foto cuando cae una gota, sin audio.</p>
+<canvas id="c" hidden></canvas>
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = String((window.PORTFOLIO && window.PORTFOLIO.api) || '').replace(/\/+$/, '');
+  var POLL_MS = 1500, WIDTH = 900;
+  var video = document.getElementById('v'), canvas = document.getElementById('c');
+  var state = document.getElementById('state');
+  var taken = 0, wake = null;
+
+  var match = /[?&]t=([0-9a-fA-F]+)/.exec(location.search);
+  if (match) {
+    localStorage.setItem('cameraToken', match[1]);
+    history.replaceState(null, '', location.pathname);
+  }
+  var token = localStorage.getItem('cameraToken') || '';
+
+  async function stayAwake() {
+    try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) { wake = null; }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) stayAwake(); });
+
+  function shoot(shot) {
+    var scale = WIDTH / video.videoWidth;
+    var h = Math.round(video.videoHeight * scale);
+    canvas.width = WIDTH; canvas.height = h;
+    var g = canvas.getContext('2d');
+    g.drawImage(video, 0, 0, WIDTH, h);
+    g.fillStyle = 'rgba(4,8,30,.72)';
+    g.fillRect(0, h - 56, WIDTH, 56);
+    g.fillStyle = '#fff';
+    g.font = '600 26px system-ui, sans-serif';
+    var time = new Date().toLocaleTimeString('es-MX', { timeZone: 'America/Mazatlan' });
+    g.fillText('Gota ' + shot.n + (shot.place ? ', desde ' + shot.place : '') + '   ' + time + ' en Culiacán', 22, h - 19);
+    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+  }
+
+  async function send(body) {
+    var r = await fetch(API + '/api/camera', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body)
+    });
+    if (r.status === 401) throw new Error('token');
+    return r.json();
+  }
+
+  async function loop() {
+    try {
+      var data = await send({ token: token });
+      for (var i = 0; i < (data.shots || []).length; i++) {
+        var shot = data.shots[i];
+        await send({ token: token, photo: { id: shot.id, jpeg: shoot(shot) } });
+        taken++;
+      }
+      state.textContent = 'En línea. Fotos tomadas: ' + taken;
+    } catch (e) {
+      state.textContent = e.message === 'token' ? 'Token inválido' : 'Sin conexión, reintentando';
+    }
+    setTimeout(loop, POLL_MS);
+  }
+
+  document.getElementById('go').addEventListener('click', async function () {
+    if (!token) { state.textContent = 'Falta el token en la URL'; return; }
+    try {
+      video.srcObject = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
+      });
+      this.hidden = true;
+      stayAwake();
+      loop();
+    } catch (e) {
+      state.textContent = 'No se pudo abrir la cámara: ' + e.name;
+    }
+  });
+})();
+</script>
+</body>
+</html>

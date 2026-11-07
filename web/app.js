@@ -3,8 +3,8 @@
   'use strict';
 
   var API = String((window.PORTFOLIO && window.PORTFOLIO.api) || '').replace(/\/+$/, '');
-  var PREVIEW = !API;
   var $ = function (id) { return document.getElementById(id); };
+  var all = function (q) { return Array.prototype.slice.call(document.querySelectorAll(q)); };
 
   /* language ---------------------------------------------------------- */
   var ES = {
@@ -13,8 +13,7 @@
     heroLead: 'Estudiante de Ingeniería en Sistemas, especializado en cómputo en la nube, seguridad en la nube e infraestructura en AWS.',
     heroSub: 'Disponible para empleos, prácticas y colaboraciones.',
     heroCta: 'Ver mis proyectos',
-    heroCta2: 'Deja tu gota',
-    heroHint: 'Nadie ha tocado la nube. Inténtalo.',
+    heroCta2: 'Soltar una gota',
     aboutTitle: 'Construyo soluciones seguras y escalables en la nube.',
     about1: 'Curso el noveno semestre de Ingeniería en Sistemas en el Instituto Tecnológico de Culiacán, enfocado en arquitectura en la nube, seguridad en la nube e infraestructura en AWS.',
     about2: 'Me interesan SecOps, DevSecOps y el diseño de sistemas, y aprendo con laboratorios prácticos y proyectos reales: aplicaciones serverless, flujos de datos y agentes de IA desplegados en AWS.',
@@ -33,7 +32,10 @@
     cLang: 'Idiomas', cLangV: 'Español, inglés B2',
     projectsTitle: 'Proyectos',
     live: 'Sitio en vivo', code: 'Código', try: 'Pruébalo',
-    p0: 'Este portafolio. Un sistema IoT serverless en AWS: la gota de cada visitante viaja por una API hasta un teléfono real de 2014, y una cola la guarda mientras el teléfono está apagado.',
+    m0: '6 de 6', m0t: 'gotas cayeron en el teléfono real después de esperar hasta 64 minutos en la cola',
+    m1t: 'adultos mayores en Culiacán viven a más de 15 minutos a pie de un refugio fresco',
+    m2: '0 inseguras', m2t: 'respuestas en 26 preguntas públicas reales, contra 2 en la primera prueba',
+    p0: 'Este portafolio. Un sistema IoT serverless en AWS: la gota de cada visitante viaja por una API hasta un teléfono real de 2015, y una cola la guarda mientras el teléfono está apagado.',
     p0r: 'Proyecto individual: arquitectura, despliegue y cliente del teléfono.',
     p1: 'Mapa de tiempos a pie hacia refugios frescos para adultos mayores en tres ciudades de México, construido con datos abiertos en AWS y aprovisionado con Terraform.',
     p1r: 'Proyecto individual: flujo de datos, infraestructura y mapa.',
@@ -49,24 +51,33 @@
     p6: 'Sistema de gestión para optimizar procesos administrativos, presentado en la Feria de Ingenierías.',
     p6r: 'Proyecto en equipo.',
     dropTitle: 'Toda nube está hecha de gotas. Deja la tuya.',
-    drop1: 'Este teléfono es real. Es de 2014, está en mi cuarto en Culiacán y su pantalla es un pedacito de este cielo. Suelta una gota y caerá ahí, en el mundo real, estés donde estés.',
+    drop1: 'Este teléfono es real. Es un LG de 2015, está en mi cuarto en Culiacán y su pantalla es un pedacito de este cielo. Suelta una gota y caerá ahí, en el mundo real, estés donde estés.',
     dropBtn: 'Soltar una gota',
     phoneCap: 'Este es el teléfono real. Su pantalla aquí refleja la que está en mi cuarto.',
-    dropFine: 'Sin cuentas y sin cookies. Solo guardo el número de la gota, su hora y tu zona horaria.',
+    dropFine: 'Sin cuentas y sin cookies. Solo guardo el número de la gota, su hora y tu zona horaria. Una cámara fotografía la pantalla del teléfono cuando cae una gota, y cada foto se borra a los 30 días.',
     howTitle: 'Cómo corre este sitio en AWS',
-    howPath: 'El camino de una gota',
-    h1: 'AWS Amplify sirve esta página, y tu navegador llama a un endpoint de API Gateway.',
-    h2: 'Una función Lambda cuenta la gota y la guarda en una cola en DynamoDB.',
-    h3: 'El teléfono pide las gotas pendientes cada 3 segundos, las recibe y confirma la entrega.',
-    h4: 'CloudWatch registra cada paso, con un panel y una alarma de errores.',
+    howIntro: 'Este diagrama está vivo. Cada número sale de tu propia gota.',
+    n1: 'Tu navegador', n1t: 'Servido por AWS Amplify',
+    n2t: 'HTTPS con límite de peticiones',
+    n3t: 'Cuenta la gota y la pone en cola',
+    n4t: 'Guarda la cola',
+    n5: 'LG en Culiacán', n5t: 'Pide gotas cada 3 segundos',
+    n6t: 'Guarda la foto real',
+    traceBtn: 'Enviar una gota por aquí',
+    traceWatch: 'CloudWatch registra cada paso, con un panel y una alarma de errores.',
     howSec: 'Decisiones de seguridad',
-    s1: 'El rol de Lambda solo alcanza una tabla de DynamoDB y sus propios logs.',
-    s2: 'El teléfono se autentica con un token que nunca llega al repositorio.',
-    s3: 'La API admite 20 peticiones por segundo y valida cada entrada.',
-    s4: 'Un usuario de IAM dedicado, sin permisos de administrador, despliega el proyecto.',
+    s1: 'El rol de Lambda solo alcanza una tabla de DynamoDB, una carpeta de S3 y sus propios logs.',
+    s2: 'El teléfono y la cámara se autentican con un token que nunca llega al repositorio.',
+    s3: 'El bucket de fotos es privado, está cifrado y bloquea todo acceso público.',
+    s4: 'La API admite 20 peticiones por segundo y valida cada entrada.',
+    s5: 'Un usuario de IAM dedicado, sin permisos de administrador, despliega el proyecto.',
+    policyBtn: 'Ver la política IAM real',
+    tryTitle: 'Intenta hacerte pasar por el teléfono',
+    tryText: 'Envía a la API una petición falsa como si fueras mi LG. Es una llamada real y pasa por la misma revisión que el teléfono.',
+    tryBtn: 'Enviar petición falsa',
     contactTitle: 'Trabajemos juntos.',
     contact1: 'Disponible para empleos, prácticas y colaboraciones en nube, seguridad y software.',
-    foot: 'Tu dispositivo pinta este cielo en vivo. Alojado en AWS Amplify, con API Gateway, Lambda, DynamoDB y CloudWatch.',
+    foot: 'Tu dispositivo pinta este cielo en vivo. Alojado en AWS Amplify, con API Gateway, Lambda, DynamoDB, S3 y CloudWatch.',
     footCode: 'Código fuente'
   };
   var MSG = {
@@ -75,17 +86,28 @@
       awakeNoBat: 'The phone is awake. Last heard {t}.',
       asleep: 'The phone is asleep. Last heard {t}. Your drop will wait for it.',
       never: 'The phone hasn\'t woken up yet. Your drop will wait for it.',
-      preview: 'Preview: the phone is simulated on this page.',
       falling: 'Falling toward Culiacán.',
       waiting: 'Drop {n} is waiting. It lands as soon as the phone wakes up.',
       landed: 'Drop {n} landed in Culiacán after {s} s. It is part of this cloud now.',
-      left: 'Drop {n} is already in the cloud. Thank you.',
       failed: 'The drop did not reach AWS. Check your connection and let go of another one.',
       count: '{n} drops from {p} places so far.',
       countPlace: '{n} drops from one place so far.',
       countOne: 'The first drop has fallen.',
       first: 'This cloud is waiting for its first drop.',
+      hero: 'This cloud holds {n} drops. Touch it.',
+      heroOne: 'This cloud holds 1 drop. Touch it.',
+      heroZero: 'Nobody has ever touched the cloud. Try it.',
       again: 'Let go of another',
+      dockCount: '{n} drops', dockOne: '1 drop', dockZero: 'Let go of a drop',
+      dockAwake: 'The real phone is awake', dockAsleep: 'The real phone is asleep',
+      fellFrom: 'A drop just fell from {p}.', fell: 'A drop just fell.',
+      yours: 'This is your drop, photographed in my room seconds ago.',
+      lastPhoto: 'Last photo of a real drop: number {n}{from}, {t}.',
+      from: ' from {p}',
+      soundOn: 'Sound on', soundOff: 'Sound off',
+      sending: 'Sending the forged request...',
+      blocked: '{n} forged requests blocked so far.', blockedOne: '1 forged request blocked so far.',
+      attackFail: 'The request did not reach AWS. Try again.',
       seconds: '{n} s ago', minutes: '{n} min ago', hours: '{n} h ago', days: '{n} d ago', now: 'just now'
     },
     es: {
@@ -93,24 +115,35 @@
       awakeNoBat: 'El teléfono está despierto. Reportó {t}.',
       asleep: 'El teléfono está dormido. Reportó {t}. Tu gota lo esperará.',
       never: 'El teléfono aún no despierta. Tu gota lo esperará.',
-      preview: 'Vista previa: el teléfono está simulado en esta página.',
       falling: 'Cayendo hacia Culiacán.',
       waiting: 'La gota {n} está esperando. Cae en cuanto el teléfono despierte.',
       landed: 'La gota {n} cayó en Culiacán después de {s} s. Ya es parte de esta nube.',
-      left: 'La gota {n} ya está en la nube. Gracias.',
       failed: 'La gota no llegó a AWS. Revisa tu conexión y suelta otra.',
       count: '{n} gotas desde {p} lugares hasta ahora.',
       countPlace: '{n} gotas desde un lugar hasta ahora.',
       countOne: 'Ya cayó la primera gota.',
       first: 'Esta nube espera su primera gota.',
+      hero: 'Esta nube guarda {n} gotas. Tócala.',
+      heroOne: 'Esta nube guarda 1 gota. Tócala.',
+      heroZero: 'Nadie ha tocado la nube. Inténtalo.',
       again: 'Soltar otra',
+      dockCount: '{n} gotas', dockOne: '1 gota', dockZero: 'Soltar una gota',
+      dockAwake: 'El teléfono real está despierto', dockAsleep: 'El teléfono real está dormido',
+      fellFrom: 'Acaba de caer una gota desde {p}.', fell: 'Acaba de caer una gota.',
+      yours: 'Esta es tu gota, fotografiada en mi cuarto hace unos segundos.',
+      lastPhoto: 'Última foto de una gota real: la número {n}{from}, {t}.',
+      from: ' desde {p}',
+      soundOn: 'Sonido sí', soundOff: 'Sonido no',
+      sending: 'Enviando la petición falsa...',
+      blocked: '{n} peticiones falsas bloqueadas hasta ahora.', blockedOne: '1 petición falsa bloqueada hasta ahora.',
+      attackFail: 'La petición no llegó a AWS. Inténtalo otra vez.',
       seconds: 'hace {n} s', minutes: 'hace {n} min', hours: 'hace {n} h', days: 'hace {n} d', now: 'justo ahora'
     }
   };
   var EN = {};
-  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (el) { EN[el.getAttribute('data-t')] = el.textContent; });
+  all('[data-t]').forEach(function (el) { EN[el.getAttribute('data-t')] = el.textContent; });
 
-  var lang = 'en';
+  var lang = '';
   try { lang = localStorage.getItem('lang') || ''; } catch (e) { lang = ''; }
   if (!lang) lang = /^es/i.test(navigator.language || '') ? 'es' : 'en';
 
@@ -119,18 +152,27 @@
     Object.keys(vars || {}).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
     return s;
   }
+  function num(n) { return Number(n).toLocaleString(lang); }
+
+  /* state ---------------------------------------------------------------- */
+  var state = {
+    count: null, places: 0, blocked: 0, phone: null, skew: 0, seenLanded: 0, lastRecent: 0,
+    lastPhoto: null, cameraOnline: false, mine: {}, proofIsMine: false
+  };
+
   function setLang(next) {
     lang = next;
     document.documentElement.lang = lang;
     var d = lang === 'es' ? ES : EN;
-    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (el) {
+    all('[data-t]').forEach(function (el) {
       var k = el.getAttribute('data-t');
       if (d[k] != null) el.textContent = d[k];
     });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) {
+    all('[data-lang]').forEach(function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang));
     });
     try { localStorage.setItem('lang', lang); } catch (e) { /* optional */ }
+    renderSound();
     renderStatus();
   }
 
@@ -140,22 +182,36 @@
   try { sky = window.Sky && window.Sky($('sky')); } catch (e) { sky = null; }
   if (!sky) $('sky').style.display = 'none';
 
-  /* each stop: section, time of day, how far the clouds sink, how much the scene dims for reading */
+  /* section, time of day, how far the clouds sink, how much the scene dims for reading */
   var STOPS = [
-    ['home', 0, 0, 0], ['about', .27, .95, .8], ['skills', .46, 1.15, .78],
-    ['projects', .64, 1.2, .5], ['drop', .8, .34, .12], ['how', .88, 1, .5], ['contact', .985, .95, .42]
+    ['home', 0, innerWidth < 860 ? .62 : .24, 0], ['about', .27, 1.05, 1], ['skills', .46, 1.2, .95],
+    ['projects', .64, 1.2, .6], ['drop', .8, .34, .12], ['how', .88, 1.2, .7], ['contact', .985, 1.1, .85]
   ];
+  /* time shown by the small clock for each stop, in minutes after midnight */
+  var CLOCK = [[0, 930], [.27, 1110], [.46, 1180], [.64, 1290], [.8, 1420], [.88, 1560], [.985, 1820]];
   var anchors = [];
   function measure() {
     anchors = STOPS.map(function (s) {
-      var el = $(s[0]);
-      return { y: el.offsetTop - innerHeight * .28, d: s[1], g: s[2], v: s[3] };
+      return { y: $(s[0]).offsetTop - innerHeight * .28, d: s[1], g: s[2], v: s[3] };
     });
     anchors[0].y = 0;
     var end = document.documentElement.scrollHeight - innerHeight;
     anchors[anchors.length - 1].y = Math.min(anchors[anchors.length - 1].y, end);
   }
   function ease(t) { return t * t * (3 - 2 * t); }
+  function renderClock(day) {
+    var mins = CLOCK[CLOCK.length - 1][1];
+    for (var i = 0; i < CLOCK.length - 1; i++) {
+      if (day <= CLOCK[i + 1][0]) {
+        var t = (day - CLOCK[i][0]) / (CLOCK[i + 1][0] - CLOCK[i][0]);
+        mins = CLOCK[i][1] + (CLOCK[i + 1][1] - CLOCK[i][1]) * Math.max(0, t);
+        break;
+      }
+    }
+    var m = Math.round(mins / 5) * 5 % 1440, h = Math.floor(m / 60), label = h >= 12 ? 'pm' : 'am';
+    var h12 = h % 12 || 12, mm = String(m % 60).padStart(2, '0');
+    $('clock').textContent = h12 + ':' + mm + ' ' + label;
+  }
   var sections = ['about', 'skills', 'projects', 'drop', 'how', 'contact'];
   function onScroll() {
     var y = scrollY, a = anchors[0], b = anchors[anchors.length - 1], i;
@@ -164,20 +220,23 @@
     }
     if (y > anchors[anchors.length - 1].y) a = b = anchors[anchors.length - 1];
     var t = b.y > a.y ? ease((y - a.y) / (b.y - a.y)) : 0;
+    var day = a.d + (b.d - a.d) * t;
     if (sky) {
-      sky.setDay(a.d + (b.d - a.d) * t);
+      sky.setDay(day);
       sky.setGrow(a.g + (b.g - a.g) * t);
       sky.setVeil(a.v + (b.v - a.v) * t);
       if (calm) sky.frame(20);
     }
-    var dayNow = a.d + (b.d - a.d) * t;
-    $('wires').style.opacity = Math.max(0, Math.min(1, (dayNow - .56) / .16));
+    $('wires').style.opacity = Math.max(0, Math.min(1, (day - .56) / .16));
+    renderClock(day);
     document.querySelector('.top').classList.toggle('solid', y > innerHeight * .6);
     var active = '';
     sections.forEach(function (id) { if ($(id).offsetTop - innerHeight * .4 <= y) active = id; });
-    Array.prototype.forEach.call(document.querySelectorAll('.top nav a'), function (l) {
-      l.classList.toggle('on', l.getAttribute('href') === '#' + active);
+    all('.top nav a').forEach(function (l) {
+      l.classList.toggle('on', l.getAttribute('href') === '#' + (active === 'how' ? 'drop' : active));
     });
+    var box = $('phone').getBoundingClientRect();
+    $('dock').classList.toggle('away', box.top < innerHeight * .8 && box.bottom > innerHeight * .2);
   }
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', function () { measure(); onScroll(); fitFall(); });
@@ -189,10 +248,41 @@
     if (!sky || now - lastTouch < 45) return;
     lastTouch = now;
     sky.touch(e.clientX, e.clientY);
-    if (++touched === 14) $('touchHint').classList.add('done');
+    if (++touched === 40) $('touchHint').classList.add('done');
   }
   addEventListener('pointermove', feel, { passive: true });
   addEventListener('pointerdown', feel, { passive: true });
+
+  /* sound: off until the visitor asks for it ----------------------------- */
+  var soundOn = false, audio = null;
+  function renderSound() {
+    var b = $('sound');
+    b.textContent = say(soundOn ? 'soundOn' : 'soundOff');
+    b.setAttribute('aria-pressed', String(soundOn));
+  }
+  $('sound').addEventListener('click', function () {
+    soundOn = !soundOn;
+    renderSound();
+    if (soundOn) plink();
+  });
+  function plink() {
+    if (!soundOn) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      audio = audio || new AC();
+      var t = audio.currentTime;
+      [[1250, .24], [880, .1]].forEach(function (n, i) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(n[0], t + i * .07);
+        o.frequency.exponentialRampToValueAtTime(n[0] * .46, t + i * .07 + .22);
+        g.gain.setValueAtTime(n[1], t + i * .07);
+        g.gain.exponentialRampToValueAtTime(.0008, t + i * .07 + .55);
+        o.connect(g); g.connect(audio.destination);
+        o.start(t + i * .07); o.stop(t + i * .07 + .6);
+      });
+    } catch (e) { /* sound is optional */ }
+  }
 
   /* the phone's screen: same water the real phone shows ----------------- */
   var screen = $('screen'), sc = screen.getContext('2d');
@@ -239,13 +329,17 @@
     sc.fillStyle = 'rgba(255,255,255,.95)';
     sc.textAlign = 'center';
     sc.font = '500 62px "Shippori Mincho", serif';
-    sc.fillText(sky2Line(), 180, 112);
+    sc.fillText(state.count != null ? num(state.count) : '', 180, 112);
     sc.font = '500 19px "Shippori Mincho", serif';
     sc.fillStyle = 'rgba(255,255,255,.7)';
-    sc.fillText(lang === 'es' ? 'gotas en la nube' : 'drops in the cloud', 180, 146);
+    var one = state.count === 1;
+    sc.fillText(lang === 'es' ? (one ? 'gota en la nube' : 'gotas en la nube') : (one ? 'drop in the cloud' : 'drops in the cloud'), 180, 146);
   }
-  function sky2Line() { return state.count != null ? state.count.toLocaleString(lang) : ''; }
-  function loopScreen(now) { paintScreen(now); requestAnimationFrame(loopScreen); }
+  function loopScreen(now) {
+    var box = screen.getBoundingClientRect();
+    if (box.bottom > 0 && box.top < innerHeight) paintScreen(now);
+    requestAnimationFrame(loopScreen);
+  }
 
   /* a drop falling across the viewport ---------------------------------- */
   var fall = $('fall'), fc = fall.getContext('2d');
@@ -264,35 +358,55 @@
     g.addColorStop(0, '#fff'); g.addColorStop(.55, '#bcd3ff'); g.addColorStop(1, '#6d92ff');
     fc.fillStyle = g; fc.fill();
   }
+  function phoneInView() {
+    var b = screen.getBoundingClientRect();
+    return b.top < innerHeight * .8 && b.bottom > innerHeight * .2;
+  }
   function letFall(done) {
-    var box = screen.getBoundingClientRect();
-    var tx = box.left + box.width / 2, ty = box.top + box.height * .68;
-    var x0 = Math.max(40, tx - innerWidth * .08), y0 = -30;
+    var dockBox = $('dockBtn').getBoundingClientRect(), box = screen.getBoundingClientRect();
+    var inView = phoneInView();
+    var tx = inView ? box.left + box.width / 2 : dockBox.left + 27;
+    var ty = inView ? box.top + box.height * .68 : dockBox.top + 28;
+    var x0 = Math.max(40, tx - innerWidth * .1), y0 = -30;
     if (calm) { done(); return; }
     var t0 = performance.now(), dur = 1150;
     (function step(now) {
       var t = Math.min(1, (now - t0) / dur), e = t * t;
       var x = x0 + (tx - x0) * t, y = y0 + (ty - y0) * e;
       fc.clearRect(0, 0, innerWidth, innerHeight);
-      var trail = fc.createLinearGradient(x, y - 150 * e - 20, x, y);
-      trail.addColorStop(0, 'rgba(180,205,255,0)'); trail.addColorStop(1, 'rgba(200,220,255,.55)');
+      var trail = fc.createLinearGradient(x, y - 170 * e - 20, x, y);
+      trail.addColorStop(0, 'rgba(180,205,255,0)'); trail.addColorStop(1, 'rgba(200,220,255,.6)');
       fc.strokeStyle = trail; fc.lineWidth = 2; fc.beginPath();
-      fc.moveTo(x - (tx - x0) / dur * 150 * e, y - 150 * e - 20); fc.lineTo(x, y); fc.stroke();
+      fc.moveTo(x - (tx - x0) / dur * 170 * e, y - 170 * e - 20); fc.lineTo(x, y); fc.stroke();
       dropShape(x, y, 1.15);
       if (t < 1) { requestAnimationFrame(step); return; }
       fc.clearRect(0, 0, innerWidth, innerHeight);
       done();
     })(t0);
   }
-  function land() {
+  function ripple() {
     ripples.push({ x: 180, y: 430, t: performance.now() });
-    var p = $('phone');
-    p.classList.add('hit');
-    setTimeout(function () { p.classList.remove('hit'); }, 650);
+    var p = $('phone'), d = $('dock');
+    p.classList.add('hit'); d.classList.add('hit');
+    setTimeout(function () { p.classList.remove('hit'); d.classList.remove('hit'); }, 650);
+    plink();
   }
 
-  /* state and the API ---------------------------------------------------- */
-  var state = { count: null, places: null, phone: null, skew: 0, offset: 0, seenRecent: 0 };
+  var toastTimer = 0;
+  function toast(text) {
+    var t = $('toast');
+    t.textContent = text;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 6000);
+  }
+  /* the same message for whoever is watching: the section if it's on screen, a toast if not */
+  function report(text) {
+    $('result').textContent = text;
+    if (!phoneInView()) toast(text);
+  }
+
+  /* status ----------------------------------------------------------------- */
   function ago(ts) {
     var s = Math.max(0, Math.round((Date.now() + state.skew - ts) / 1000));
     if (s < 8) return say('now');
@@ -302,11 +416,10 @@
     return say('days', { n: Math.round(s / 86400) });
   }
   function renderStatus() {
-    var el = $('status'), cap = $('caption'), p = state.phone;
+    var el = $('status'), p = state.phone, count = state.count;
     if (!el) return;
     var txt, awake = false;
-    if (PREVIEW) txt = say('preview');
-    else if (!p || !p.lastSeen) txt = say('never');
+    if (!p || !p.lastSeen) txt = say('never');
     else if (p.online) {
       awake = true;
       txt = p.battery >= 0 ? say('awake', { b: p.battery, t: ago(p.lastSeen) }) : say('awakeNoBat', { t: ago(p.lastSeen) });
@@ -314,88 +427,182 @@
     el.className = 'status' + (awake ? ' awake' : '');
     el.innerHTML = '<i aria-hidden="true"></i>';
     el.appendChild(document.createTextNode(txt));
-    cap.textContent = state.count == null ? '' : state.count === 0 ? say('first') :
-      say(state.count === 1 ? 'countOne' : (state.places || 0) <= 1 ? 'countPlace' : 'count', { n: state.count.toLocaleString(lang), p: (state.places || 1).toLocaleString(lang) });
-    if (sky && state.count != null) sky.setMass(Math.log(1 + state.count) / Math.log(10));
+
+    var ds = $('dockState');
+    ds.textContent = say(awake ? 'dockAwake' : 'dockAsleep');
+    ds.className = awake ? 'awake' : '';
+
+    if (count == null) return;
+    $('caption').textContent = count === 0 ? say('first') :
+      say(count === 1 ? 'countOne' : state.places <= 1 ? 'countPlace' : 'count', { n: num(count), p: num(state.places) });
+    $('dockCount').textContent = count === 0 ? say('dockZero') : count === 1 ? say('dockOne') : say('dockCount', { n: num(count) });
+    $('heroCount').textContent = count === 0 ? say('heroZero') : count === 1 ? say('heroOne') : say('hero', { n: num(count) });
+    if (sky) sky.setMass(Math.log(1 + count) / Math.log(10));
+    if (state.blocked) $('blocked').textContent = say(state.blocked === 1 ? 'blockedOne' : 'blocked', { n: num(state.blocked) });
+    renderProof();
+  }
+  function renderProof() {
+    var p = state.lastPhoto;
+    if (!p || state.proofIsMine) return;
+    var img = $('proofImg'), src = API + '/api/photo/' + p.id;
+    if (img.getAttribute('src') !== src) {
+      img.src = src;
+      img.alt = 'Photo of the real phone showing drop ' + p.n;
+    }
+    $('proofCap').textContent = say('lastPhoto', {
+      n: num(p.n), t: ago(p.at), from: p.place ? say('from', { p: p.place }) : ''
+    });
+    $('proof').hidden = false;
+  }
+  function showMyPhoto(id, n) {
+    state.proofIsMine = true;
+    var img = $('proofImg');
+    img.src = API + '/api/photo/' + id;
+    img.alt = 'Photo of the real phone showing drop ' + n;
+    $('proofCap').textContent = say('yours');
+    $('proof').hidden = false;
+    if (!phoneInView()) toast(say('yours'));
   }
   function refresh() {
-    if (PREVIEW) {
-      if (state.count == null) { state.count = 128; state.places = 23; }
-      renderStatus();
-      return;
-    }
     fetch(API + '/api/sky', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       state.skew = (d.now || Date.now()) - Date.now();
       state.count = d.count; state.places = d.places; state.phone = d.phone;
-      if (state.seenRecent && d.lastLandedAt > state.seenRecent) land();
-      state.seenRecent = d.lastLandedAt || state.seenRecent;
+      state.blocked = d.blocked || 0; state.lastPhoto = d.lastPhoto; state.cameraOnline = d.cameraOnline;
+      if (state.seenLanded && d.lastLandedAt > state.seenLanded) ripple();
+      state.seenLanded = d.lastLandedAt || state.seenLanded;
+
+      /* other people's drops, so the page feels inhabited */
+      var fresh = (d.recent || [])[0];
+      if (fresh) {
+        if (state.lastRecent && fresh.n > state.lastRecent && !state.mine[fresh.n]) {
+          toast(fresh.place ? say('fellFrom', { p: fresh.place }) : say('fell'));
+        }
+        state.lastRecent = Math.max(state.lastRecent, fresh.n);
+      }
       renderStatus();
     }).catch(function () { renderStatus(); });
   }
 
+  /* the live trace --------------------------------------------------------- */
+  function step(name, label) {
+    var li = document.querySelector('.trace [data-step="' + name + '"]');
+    if (!li) return;
+    li.classList.add('lit');
+    if (label != null) li.querySelector('em').textContent = label;
+  }
+  function clearTrace() {
+    all('.trace li').forEach(function (li) { li.classList.remove('lit'); li.querySelector('em').textContent = ''; });
+  }
+
+  /* letting go of a drop ---------------------------------------------------- */
   function zone() {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; }
   }
-  function waitForLanding(id, n, t0) {
+  function waitForPhoto(id, n) {
     var tries = 0;
     (function poll() {
-      fetch(API + '/api/drop/' + encodeURIComponent(id), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      fetch(API + '/api/drop/' + id, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.photo) { step('s3', ((Date.now() + state.skew - d.at) / 1000).toFixed(1) + ' s'); showMyPhoto(id, n); return; }
+        if (++tries < 12) setTimeout(poll, 800);
+      }).catch(function () { /* the photo is a bonus */ });
+    })();
+  }
+  function waitForLanding(id, n) {
+    var tries = 0;
+    (function poll() {
+      fetch(API + '/api/drop/' + id, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
         if (d.landedAt) {
-          land();
-          $('result').textContent = say('landed', { n: n.toLocaleString(lang), s: (Math.max(d.landedMs, 0) / 1000).toFixed(1) });
+          ripple();
+          var secs = (Math.max(d.landedMs, 0) / 1000).toFixed(1);
+          step('phone', secs + ' s');
+          report(say('landed', { n: num(n), s: secs }));
           refresh();
+          if (state.cameraOnline) waitForPhoto(id, n);
           return;
         }
-        if (++tries < 8) setTimeout(poll, 1500);
-        else $('result').textContent = say('waiting', { n: n.toLocaleString(lang) });
-      }).catch(function () {
-        $('result').textContent = say('waiting', { n: n.toLocaleString(lang) });
-      });
+        if (++tries < 20) setTimeout(poll, 900);
+        else report(say('waiting', { n: num(n) }));
+      }).catch(function () { report(say('waiting', { n: num(n) })); });
     })();
   }
 
-  var btn = $('release');
-  btn.addEventListener('click', function () {
-    btn.disabled = true;
-    $('result').textContent = say('falling');
-    var finish = function () { setTimeout(function () { btn.disabled = false; btn.textContent = say('again'); }, 1800); };
+  var busy = false, buttons = ['release', 'heroDrop', 'traceBtn', 'dockBtn'];
+  function release() {
+    if (busy) return;
+    busy = true;
+    buttons.forEach(function (id) { $(id).disabled = true; });
+    clearTrace();
+    state.proofIsMine = false;
+    report(say('falling'));
+    step('browser');
 
-    if (PREVIEW) {
-      letFall(function () {
-        land();
-        state.count += 1;
-        renderStatus();
-        $('result').textContent = say('landed', { n: state.count.toLocaleString(lang), s: '1.8' });
-        finish();
-      });
-      return;
-    }
+    var t0 = performance.now();
     var sent = fetch(API + '/api/drop', {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ zone: zone(), lang: lang })
-    }).then(function (r) { if (!r.ok) throw new Error('drop'); return r.json(); });
+    }).then(function (r) { if (!r.ok) throw new Error('drop'); return r.json(); }).then(function (d) {
+      var rtt = Math.round(performance.now() - t0), tm = d.timing || {};
+      state.mine[d.n] = true;
+      step('browser', rtt + ' ms');
+      setTimeout(function () { step('api', Math.max(0, rtt - (tm.lambdaMs || 0)) + ' ms'); }, 160);
+      setTimeout(function () { step('lambda', (tm.lambdaMs != null ? tm.lambdaMs : '') + ' ms'); }, 320);
+      setTimeout(function () { step('dynamo', (tm.dynamoMs != null ? tm.dynamoMs : '') + ' ms'); }, 480);
+      return d;
+    });
 
     letFall(function () {
       sent.then(function (d) {
-        state.count = d.n; renderStatus();
+        state.count = d.n;
+        state.lastRecent = Math.max(state.lastRecent, d.n);
+        renderStatus();
+        ripple();
         if (state.phone && state.phone.online) {
-          land();
-          $('result').textContent = say('falling');
           waitForLanding(d.id, d.n);
         } else {
-          $('result').textContent = say('waiting', { n: d.n.toLocaleString(lang) });
+          report(say('waiting', { n: num(d.n) }));
         }
         finish();
       }).catch(function () {
-        $('result').textContent = say('failed');
+        report(say('failed'));
         finish();
       });
+    });
+    function finish() {
+      setTimeout(function () {
+        busy = false;
+        buttons.forEach(function (id) { $(id).disabled = false; });
+        $('release').textContent = say('again');
+      }, 2200);
+    }
+  }
+  buttons.forEach(function (id) { $(id).addEventListener('click', release); });
+
+  /* the forged request: a real call that the API must refuse --------------- */
+  $('attack').addEventListener('click', function () {
+    var btn = this, out = $('attackOut');
+    btn.disabled = true;
+    out.textContent = say('sending');
+    var t0 = performance.now();
+    fetch(API + '/api/phone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ token: 'forged-' + Math.random().toString(16).slice(2, 10), beat: true, battery: 100 })
+    }).then(function (r) {
+      return r.json().then(function (b) {
+        var ms = Math.round(performance.now() - t0);
+        out.textContent = 'HTTP ' + r.status + ' in ' + ms + ' ms\n' + JSON.stringify({ error: b.error }, null, 2);
+        if (b.blocked) { state.blocked = b.blocked; renderStatus(); }
+      });
+    }).catch(function () {
+      out.textContent = say('attackFail');
+    }).then(function () {
+      setTimeout(function () { btn.disabled = false; }, 1200);
     });
   });
 
   /* start ------------------------------------------------------------------ */
-  Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) {
+  all('[data-lang]').forEach(function (b) {
     b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
   });
   fitFall();
@@ -403,7 +610,7 @@
   setLang(lang);
   onScroll();
   refresh();
-  setInterval(refresh, 10000);
+  setInterval(refresh, 8000);
   requestAnimationFrame(loopScreen);
   if (sky) { if (calm) sky.frame(20); else sky.start(); }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
