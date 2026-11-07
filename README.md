@@ -34,6 +34,10 @@ flowchart LR
 | Amazon CloudWatch | Logs, custom metrics in `Portfolio/Sky`, a dashboard and an error alarm |
 | AWS IAM | A deploy user limited to this project and a Lambda role limited to one table |
 
+## Every drop puts me to practice
+
+The visitor chooses what the drop asks of me: one push-up, one minute of guitar or one minute of studying AWS. The site shows a public scoreboard of what I owe and what I have done. A private page, authenticated with the same token, records practice that was really done.
+
 ## How a drop travels
 
 1. The visitor lets go of a drop. Lambda adds one to the counter and stores the drop in a pending queue.

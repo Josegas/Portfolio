@@ -133,7 +133,13 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%}
     beep();
     if (navigator.vibrate) navigator.vibrate([90, 60, 160]);
     var msg = byId('msg');
-    msg.textContent = 'Gota ' + drop.n + (drop.place ? ', desde ' + drop.place : '');
+    var ask = { push: '+1 lagartija', guitar: '+1 min de guitarra', aws: '+1 min de AWS' }[drop.kind] || '';
+    msg.innerHTML = '';
+    msg.appendChild(document.createTextNode('Gota ' + drop.n + (drop.place ? ', desde ' + drop.place : '')));
+    if (ask) {
+      msg.appendChild(document.createElement('br'));
+      msg.appendChild(document.createTextNode(ask));
+    }
     msg.style.opacity = 1;
     clearTimeout(land.t);
     land.t = setTimeout(function () { msg.style.opacity = 0; }, 6500);

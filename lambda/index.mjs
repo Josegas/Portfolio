@@ -8,6 +8,7 @@
    GET  /api/sky         public    counters, recent drops and phone status
    POST /api/phone       token     heartbeat, deliveries and pending drops
    POST /api/camera      token     photographs the phone when a drop lands
+   POST /api/reps        token     records practice that was really done
    GET  /api/health      public    liveness
 */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -36,6 +37,7 @@ const ONLINE_MS = 30000;
 const SHOT_MAX_AGE_MS = 25000;
 const PHOTO_MAX_BYTES = 1200000;
 const ID = /^[0-9a-f-]{36}$/;
+const KINDS = ['push', 'guitar', 'aws'];
 const META = { pk: 'meta', sk: 'sky' };
 const PHONE = { pk: 'meta', sk: 'phone' };
 const CAMERA = { pk: 'meta', sk: 'camera' };
@@ -100,6 +102,7 @@ async function createDrop(event) {
   const body = parse(event);
   const zone = cleanZone(body.zone);
   const place = placeName(zone);
+  const kind = KINDS.includes(body.kind) ? body.kind : 'push';
   const now = Date.now();
   const id = randomUUID();
 
@@ -107,8 +110,8 @@ async function createDrop(event) {
   const { Attributes } = await ddb.send(new UpdateCommand({
     TableName: TABLE,
     Key: META,
-    UpdateExpression: zone ? 'ADD #c :one, places :z' : 'ADD #c :one',
-    ExpressionAttributeNames: { '#c': 'count' },
+    UpdateExpression: zone ? 'ADD #c :one, #o :one, places :z' : 'ADD #c :one, #o :one',
+    ExpressionAttributeNames: { '#c': 'count', '#o': `owed_${kind}` },
     ExpressionAttributeValues: zone ? { ':one': 1, ':z': new Set([zone]) } : { ':one': 1 },
     ReturnValues: 'UPDATED_NEW'
   }));
@@ -116,14 +119,14 @@ async function createDrop(event) {
   const stamp = String(now).padStart(15, '0');
 
   await Promise.all([
-    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'drop', sk: id, n, at: now, zone } })),
-    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'pending', sk: `${stamp}#${id}`, id, n, at: now, place } })),
-    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'recent', sk: `${stamp}#${id}`, n, at: now, place } }))
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'drop', sk: id, n, at: now, zone, kind } })),
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'pending', sk: `${stamp}#${id}`, id, n, at: now, place, kind } })),
+    ddb.send(new PutCommand({ TableName: TABLE, Item: { pk: 'recent', sk: `${stamp}#${id}`, n, at: now, place, kind } }))
   ]);
   const dynamoMs = Date.now() - dbStart;
 
-  metric('DropCreated', 1, 'Count', { zone });
-  return reply(201, { id, n, timing: { lambdaMs: Date.now() - started, dynamoMs } });
+  metric('DropCreated', 1, 'Count', { zone, kind });
+  return reply(201, { id, n, kind, timing: { lambdaMs: Date.now() - started, dynamoMs } });
 }
 
 async function readDrop(id) {
@@ -161,6 +164,12 @@ async function readPhoto(id) {
   }
 }
 
+function repsOf(meta) {
+  const out = {};
+  for (const k of KINDS) out[k] = { owed: meta?.[`owed_${k}`] || 0, done: meta?.[`done_${k}`] || 0 };
+  return out;
+}
+
 async function readSky() {
   const [meta, phone, camera, recent] = await Promise.all([
     ddb.send(new GetCommand({ TableName: TABLE, Key: META })),
@@ -181,10 +190,11 @@ async function readSky() {
     count: meta.Item?.count || 0,
     places: meta.Item?.places ? meta.Item.places.size : 0,
     blocked: meta.Item?.blocked || 0,
+    reps: repsOf(meta.Item),
     lastLandedAt: meta.Item?.lastLandedAt || 0,
     lastPhoto: meta.Item?.lastPhoto || null,
     cameraOnline: !!camera.Item && now - camera.Item.lastSeen < ONLINE_MS,
-    recent: (recent.Items || []).map((d) => ({ n: d.n, at: d.at, place: d.place })),
+    recent: (recent.Items || []).map((d) => ({ n: d.n, at: d.at, place: d.place, kind: d.kind })),
     phone: p
       ? {
           online: now - p.lastSeen < ONLINE_MS,
@@ -281,8 +291,27 @@ async function phoneCall(event) {
   return reply(200, {
     now,
     count: meta.Item?.count || 0,
-    pending: (pending.Items || []).map((d) => ({ id: d.id, sk: d.sk, n: d.n, place: d.place }))
+    pending: (pending.Items || []).map((d) => ({ id: d.id, sk: d.sk, n: d.n, place: d.place, kind: d.kind }))
   });
+}
+
+async function repsCall(event) {
+  const body = parse(event);
+  if (!validToken(body.token)) return reject();
+  const n = body.n;
+  if (!KINDS.includes(body.kind) || !Number.isInteger(n) || n < 1 || n > 100) {
+    return reply(400, { error: 'bad reps' });
+  }
+  const { Attributes } = await ddb.send(new UpdateCommand({
+    TableName: TABLE,
+    Key: META,
+    UpdateExpression: 'ADD #d :n',
+    ExpressionAttributeNames: { '#d': `done_${body.kind}` },
+    ExpressionAttributeValues: { ':n': n },
+    ReturnValues: 'ALL_NEW'
+  }));
+  metric('RepsDone', n, 'Count', { kind: body.kind });
+  return reply(200, { reps: repsOf(Attributes) });
 }
 
 async function cameraCall(event) {
@@ -345,6 +374,7 @@ export const handler = async (event) => {
     if (method === 'GET' && path.startsWith('/api/drop/')) return await readDrop(path.slice('/api/drop/'.length));
     if (method === 'POST' && path === '/api/phone') return await phoneCall(event);
     if (method === 'POST' && path === '/api/camera') return await cameraCall(event);
+    if (method === 'POST' && path === '/api/reps') return await repsCall(event);
     if (method === 'GET' && path.startsWith('/api/photo/')) return await readPhoto(path.slice('/api/photo/'.length));
     return reply(404, { error: 'not found' });
   } catch (err) {

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mi práctica</title>
+<style>
+body { margin: 0; padding: 18px; background: #050b26; color: #fff; font: 17px/1.45 sans-serif; }
+h1 { font-size: 22px; margin: 0 0 14px; }
+.row { background: #0e1a55; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.row b { display: block; font-size: 19px; }
+button { margin: 8px 8px 0 0; padding: 12px 20px; font: 700 17px sans-serif; border: 0; border-radius: 999px; }
+#info { min-height: 1.5em; color: #ffd9a0; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>Registrar lo que ya hice</h1>
+<div id="list"></div>
+<p id="info"></p>
+<script src="config.js"></script>
+<script>
+/* Private page for José: it records practice that was really done. ES5 so it also runs on the LG. */
+(function () {
+  'use strict';
+  var API = String((window.PORTFOLIO && window.PORTFOLIO.api) || '').replace(/\/+$/, '');
+  var NAMES = { push: 'Lagartijas', guitar: 'Minutos de guitarra', aws: 'Minutos de AWS' };
+  var match = /[?&]t=([0-9a-fA-F]+)/.exec(location.search), token = match ? match[1] : '';
+  try {
+    if (match) { localStorage.setItem('repsToken', match[1]); history.replaceState(null, '', location.pathname); }
+    token = token || localStorage.getItem('repsToken') || '';
+  } catch (e) { /* the token in memory is enough */ }
+  var info = document.getElementById('info'), list = document.getElementById('list');
+
+  function call(method, path, body, done) {
+    var x = new XMLHttpRequest();
+    x.open(method, API + path, true);
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      var d = null;
+      try { d = JSON.parse(x.responseText); } catch (e) { d = null; }
+      done(x.status, d);
+    };
+    x.send(body ? JSON.stringify(body) : null);
+  }
+  function render(reps) {
+    list.innerHTML = '';
+    Object.keys(NAMES).forEach(function (k) {
+      var row = document.createElement('div'), b = document.createElement('b');
+      row.className = 'row';
+      b.textContent = NAMES[k] + ': ' + reps[k].done + ' de ' + reps[k].owed;
+      row.appendChild(b);
+      [1, 5, 10].forEach(function (n) {
+        var btn = document.createElement('button');
+        btn.textContent = '+' + n;
+        btn.type = 'button';
+        btn.addEventListener('click', function () { add(k, n); });
+        row.appendChild(btn);
+      });
+      list.appendChild(row);
+    });
+  }
+  function add(kind, n) {
+    info.textContent = 'Guardando...';
+    call('POST', '/api/reps', { token: token, kind: kind, n: n }, function (status, d) {
+      if (status === 200 && d) { render(d.reps); info.textContent = 'Guardado.'; }
+      else info.textContent = status === 401 ? 'Token inválido. Abre el enlace completo.' : 'No se pudo guardar.';
+    });
+  }
+  call('GET', '/api/sky', null, function (status, d) {
+    if (status === 200 && d) render(d.reps);
+    else info.textContent = 'Sin conexión.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -88,7 +88,6 @@
         <p data-t="about1">I'm in my ninth semester of Software Systems Engineering at the Instituto Tecnológico de Culiacán, focused on cloud architecture, cloud security and infrastructure on AWS.</p>
         <p data-t="about2">I'm drawn to SecOps, DevSecOps and system design, and I learn through hands-on labs and real projects: serverless applications, data pipelines and AI agents deployed on AWS.</p>
         <p data-t="about3">I got into technology because we can build almost anything to solve a real need. I stayed for the cloud: it can't be touched, and yet almost everything around us rests on it.</p>
-        <p class="offline" data-t="aboutOff">Away from the screen: Real Madrid, The Beatles, Luis Miguel, Michael Jackson, guitar, anime and training. And my family, above everything.</p>
       </div>
       <aside class="focus">
         <h3 data-t="focusTitle">What I focus on</h3>
@@ -199,8 +198,22 @@
         <h2 data-t="dropTitle">Every cloud is made of drops. Leave yours.</h2>
         <p data-t="drop1">This phone is real. It's an LG from 2015, it sits in my room in Culiacán, and its screen is a small piece of this sky. Let go of a drop and it lands there, in the real world, wherever you are.</p>
         <p class="status" id="status" role="status"></p>
+        <fieldset class="picks">
+          <legend data-t="pickTitle">Every drop puts me to practice. What do you ask of me?</legend>
+          <label><input type="radio" name="kind" value="push" checked><span data-t="kPush">1 push-up</span></label>
+          <label><input type="radio" name="kind" value="guitar"><span data-t="kGuitar">1 minute of guitar</span></label>
+          <label><input type="radio" name="kind" value="aws"><span data-t="kAws">1 minute of AWS</span></label>
+        </fieldset>
         <button class="release" id="release" type="button" data-t="dropBtn">Let go of a drop</button>
-        <p class="result" id="result" role="status"></p>
+        <div class="reply" id="reply" hidden>
+          <img src="yo-mini.webp" width="56" height="56" alt="">
+          <p class="result" id="result" role="status"></p>
+        </div>
+        <ul class="reps" id="reps" aria-label="Practice scoreboard">
+          <li data-kind="push"><b></b><span></span><i><u></u></i></li>
+          <li data-kind="guitar"><b></b><span></span><i><u></u></i></li>
+          <li data-kind="aws"><b></b><span></span><i><u></u></i></li>
+        </ul>
         <figure class="real">
           <video id="realVideo" src="lg-real.mp4" poster="lg-real.webp" width="480" height="856" muted loop playsinline preload="none" aria-label="Video of the real phone in my room as drops 4 and 5 land on its screen"></video>
           <figcaption data-t="realCap">Filmed in my room: drops 4 and 5 landing on the real phone. Measured there, a drop takes 5 to 8 seconds to arrive.</figcaption>
@@ -268,6 +281,48 @@
           <pre id="attackOut" role="status"><code>POST /api/phone
 { "token": "forged", "battery": 100 }</code></pre>
           <p class="blocked" id="blocked"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block me" id="me">
+      <figure class="portrait">
+        <img src="yo.webp" width="760" height="912" loading="lazy" alt="Anime portrait of José smiling, with freckles, braces, headphones and a white jersey">
+      </figure>
+      <div>
+        <h2 data-t="meTitle">When I close the laptop</h2>
+        <p class="intro" data-t="meIntro">This is the person behind the projects.</p>
+        <div class="tiles">
+          <article class="tile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5l4 2.9-1.5 4.7h-5L8 10.4zM12 3v4.5M21 10l-5 .4M18 19l-3.5-3.9M6 19l3.5-3.9M3 10l5 .4"/></svg>
+            <h3>Madridista</h3>
+            <p data-t="t1">I love Real Madrid and Cristiano Ronaldo. That jersey in the picture is no coincidence.</p>
+          </article>
+          <article class="tile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="2.5" y="14" width="4.5" height="7" rx="2"/><rect x="17" y="14" width="4.5" height="7" rx="2"/></svg>
+            <h3 data-t="tMusic">Music</h3>
+            <p data-t="t2">The Beatles, Luis Miguel and Michael Jackson live in my headphones, and I'm learning to play guitar.</p>
+          </article>
+          <article class="tile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.4 6.3 6.8.4-5.3 4.3 1.8 6.5L12 16.6l-5.7 3.7 1.8-6.5-5.3-4.3 6.8-.4z"/></svg>
+            <h3>Anime</h3>
+            <p data-t="t3">Naruto, Death Note, Dragon Ball and Supercampeones. It's why this sky looks like a film.</p>
+          </article>
+          <article class="tile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11" r=".9"/><circle cx="18" cy="14" r=".9"/></svg>
+            <h3 data-t="tGames">Games</h3>
+            <p data-t="t4">FIFA and Fortnite are how I switch off.</p>
+          </article>
+          <article class="tile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8M3 9.5v5M6 7.5v9M18 7.5v9M21 9.5v5"/></svg>
+            <h3 data-t="tTrain">Training</h3>
+            <p data-t="t5">I like taking care of my body. If you asked for a push-up up there, I really do it.</p>
+          </article>
+          <article class="tile gold">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3 15 3 8.9A4.9 4.9 0 0 1 12 6.2a4.9 4.9 0 0 1 9 2.7c0 6.1-9 11.6-9 11.6z"/></svg>
+            <h3 data-t="tFamily">Family</h3>
+            <p data-t="t6">I love my family, and I would do anything for them.</p>
+          </article>
         </div>
       </div>
     </section>
