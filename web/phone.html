@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="robots" content="noindex">
+<title>Una gota</title>
+<style>
+html,body{margin:0;height:100%;background:#030920;color:#fff;font-family:serif;overflow:hidden;-webkit-user-select:none}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%}
+#count{position:fixed;top:9%;left:0;right:0;text-align:center;font-size:52px;line-height:1}
+#label{position:fixed;top:9%;margin-top:62px;left:0;right:0;text-align:center;font-size:16px;opacity:.72}
+#msg{position:fixed;left:8%;right:8%;bottom:9%;text-align:center;font-size:21px;line-height:1.35;opacity:0;-webkit-transition:opacity .5s;transition:opacity .5s}
+#info{position:fixed;left:0;right:0;bottom:12px;text-align:center;font:12px sans-serif;opacity:.45}
+#start{position:fixed;top:0;left:0;right:0;bottom:0;background:#030920;display:none;text-align:center;padding:42% 10% 0;font-size:20px;line-height:1.4}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="count"></div>
+<div id="label">gotas en la nube</div>
+<div id="msg"></div>
+<div id="info"></div>
+<div id="start">Toca la pantalla para despertar</div>
+<script src="config.js"></script>
+<script>
+/* ES5 on purpose: this page runs on a browser from 2014.
+   No fetch, no promises, no arrow functions, no template strings. */
+(function () {
+  'use strict';
+  var API = String((window.PORTFOLIO && window.PORTFOLIO.api) || '').replace(/\/+$/, '');
+  var POLL_MS = 3000, BEAT_EVERY = 5;
+  var canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+  var W = 0, H = 0, ripples = [], stars = [], polls = 0, started = Date.now();
+  var delivered = [], seen = {}, queue = [], audio = null, battery = -1, charging = false;
+
+  function byId(id) { return document.getElementById(id); }
+
+  /* the token arrives once in the URL and then lives on the phone only */
+  var token = '';
+  try {
+    var match = /[?&]t=([0-9a-fA-F]+)/.exec(location.search);
+    if (match) {
+      localStorage.setItem('phoneToken', match[1]);
+      history.replaceState(null, '', location.pathname);
+    }
+    token = localStorage.getItem('phoneToken') || '';
+  } catch (e) { token = match ? match[1] : ''; }
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    stars = [];
+    for (var i = 0; i < 90; i++) {
+      stars.push({ x: Math.random() * W, y: Math.random() * H * 0.62, s: 0.5 + Math.random() * 1.4, p: Math.random() * 6.28 });
+    }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function paint() {
+    var now = Date.now(), i, k, g;
+    g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#040b28');
+    g.addColorStop(0.46, '#0c2062');
+    g.addColorStop(1, '#2a4fb4');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    for (i = 0; i < stars.length; i++) {
+      ctx.globalAlpha = 0.4 + 0.35 * Math.sin(now / 900 + stars[i].p);
+      ctx.fillStyle = '#dbe6ff';
+      ctx.fillRect(stars[i].x, stars[i].y, stars[i].s, stars[i].s);
+    }
+    ctx.globalAlpha = 1;
+
+    /* moonlight on the water */
+    for (i = 0; i < 46; i++) {
+      var ly = H * 0.46 + i * (H * 0.54 / 46), wob = Math.sin(now / 520 + i * 1.7) * W * 0.025;
+      var half = W * (0.035 + i * 0.0032) + W * 0.02 * Math.sin(i * 2.3 + now / 800);
+      ctx.globalAlpha = 0.1 + 0.34 * Math.abs(Math.sin(i * 1.3 + now / 700));
+      ctx.fillStyle = '#c9d8ff';
+      ctx.fillRect(W / 2 + wob - half, ly, half * 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    for (i = ripples.length - 1; i >= 0; i--) {
+      var r = ripples[i], age = (now - r.t) / 3200;
+      if (age >= 1) { ripples.splice(i, 1); continue; }
+      if (age < 0.12) {
+        ctx.fillStyle = 'rgba(190,212,255,' + (0.45 * (1 - age / 0.12)) + ')';
+        ctx.fillRect(0, 0, W, H);
+      }
+      for (k = 0; k < 3; k++) {
+        var a = age - k * 0.08;
+        if (a <= 0) continue;
+        ctx.save();
+        ctx.translate(W / 2, H * 0.68);
+        ctx.scale(1, 0.42);
+        ctx.beginPath();
+        ctx.arc(0, 0, a * W * 0.92, 0, Math.PI * 2);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(190,212,255,' + (0.85 * (1 - age) * (1 - k * 0.28)) + ')';
+        ctx.lineWidth = 3 - k * 0.7;
+        ctx.stroke();
+      }
+    }
+  }
+  var raf = window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
+    function (f) { return setTimeout(f, 33); };
+  (function loop() { paint(); raf(loop); })();
+
+  function beep() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audio = audio || new AC();
+      var o = audio.createOscillator(), v = audio.createGain();
+      o.connect(v); v.connect(audio.destination);
+      o.frequency.value = 1320;
+      v.gain.value = 0.16;
+      o.start(0);
+      v.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.5);
+      o.stop(audio.currentTime + 0.5);
+    } catch (e) { /* the sound is optional */ }
+  }
+
+  function land(drop) {
+    ripples.push({ t: Date.now() });
+    beep();
+    if (navigator.vibrate) navigator.vibrate([90, 60, 160]);
+    var msg = byId('msg');
+    msg.textContent = 'Gota ' + drop.n + (drop.place ? ', desde ' + drop.place : '');
+    msg.style.opacity = 1;
+    clearTimeout(land.t);
+    land.t = setTimeout(function () { msg.style.opacity = 0; }, 3500);
+    delivered.push({ id: drop.id, sk: drop.sk });
+  }
+
+  /* drops land one at a time, so a queue arrives like rain and not like a flood */
+  setInterval(function () { if (queue.length) land(queue.shift()); }, 1400);
+
+  function post(body, done) {
+    var x = new XMLHttpRequest();
+    x.open('POST', API + '/api/phone', true);
+    /* text/plain needs no CORS preflight, which old browsers handle badly */
+    x.setRequestHeader('Content-Type', 'text/plain');
+    x.timeout = 8000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      var data = null;
+      try { data = JSON.parse(x.responseText); } catch (e) { data = null; }
+      done(x.status, data);
+    };
+    x.send(JSON.stringify(body));
+  }
+
+  function netType() {
+    var c = navigator.connection;
+    return c ? String(c.type || c.effectiveType || '') : '';
+  }
+
+  function poll() {
+    polls++;
+    var sending = delivered.slice(0, 5);
+    var beat = polls % BEAT_EVERY === 1;
+    post({
+      token: token,
+      beat: beat,
+      battery: battery,
+      charging: charging,
+      network: netType(),
+      uptimeMs: Date.now() - started,
+      landed: sending
+    }, function (status, data) {
+      var info = byId('info');
+      if (status === 200 && data) {
+        delivered.splice(0, sending.length);
+        byId('count').textContent = data.count;
+        info.textContent = 'en línea';
+        var list = data.pending || [];
+        for (var i = 0; i < list.length; i++) {
+          if (!seen[list[i].id]) { seen[list[i].id] = 1; queue.push(list[i]); }
+        }
+      } else if (status === 401) {
+        info.textContent = 'token inválido';
+      } else {
+        info.textContent = 'sin conexión, reintentando';
+      }
+      setTimeout(poll, POLL_MS);
+    });
+  }
+
+  if (navigator.getBattery) {
+    navigator.getBattery().then(function (b) {
+      function read() { battery = Math.round(b.level * 100); charging = !!b.charging; }
+      read();
+      b.addEventListener('levelchange', read);
+      b.addEventListener('chargingchange', read);
+    });
+  }
+
+  /* keep the screen on where the browser allows it */
+  function stayAwake() {
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request('screen').then(null, function () {});
+    }
+  }
+
+  /* audio and vibration need one real tap on old and new browsers alike */
+  byId('start').style.display = 'block';
+  byId('start').addEventListener('click', function () {
+    byId('start').style.display = 'none';
+    beep();
+    stayAwake();
+    if (!token) { byId('info').textContent = 'falta el token en la URL'; return; }
+    poll();
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) stayAwake(); });
+})();
+</script>
+</body>
+</html>

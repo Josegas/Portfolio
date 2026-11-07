@@ -1,0 +1,8 @@
+# the phone token never leaves this machine
+.secrets/
+
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+*.zip

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>José Ángel García Pérez | Cloud and security</title>
+  <meta name="description" content="José Ángel García Pérez, Software Systems Engineering student specializing in cloud computing, cloud security and AWS infrastructure. Open to jobs, internships and collaborations.">
+  <meta name="theme-color" content="#0b3fb3">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="José Ángel García Pérez | Cloud and security">
+  <meta property="og:description" content="Software Systems Engineering student specializing in cloud computing, cloud security and AWS infrastructure.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <svg id="wires" viewBox="0 0 1600 900" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
+    <g fill="none" stroke="#050921" stroke-linecap="round">
+      <path d="M-60 500Q60 540 168 528" stroke-width="1.6"/>
+      <path d="M-60 528Q60 566 168 552" stroke-width="1.6"/>
+      <path d="M168 528Q760 690 1214 372" stroke-width="2.2"/>
+      <path d="M190 552Q790 724 1262 418" stroke-width="2.2"/>
+      <path d="M146 552Q740 752 1166 418" stroke-width="2.2"/>
+      <path d="M1214 372Q1420 470 1660 396" stroke-width="2.6"/>
+      <path d="M1262 418Q1460 512 1660 450" stroke-width="2.6"/>
+      <path d="M1166 418Q1400 540 1660 506" stroke-width="2.6"/>
+    </g>
+    <g fill="#050921">
+      <path d="M1202 300h24l7 600h-38z"/>
+      <path d="M1148 366h132v9h-132zM1160 412h112v8h-112z"/>
+      <path d="M1158 352h8v14h-8zM1262 352h8v14h-8zM1210 354h8v12h-8zM1170 398h7v14h-7zM1256 398h7v14h-7z"/>
+      <path d="M1230 462h30v66h-30z"/><path d="M1226 456h38v8h-38z"/>
+      <path d="M1176 552l40-6 1 7-40 6z"/>
+      <path d="M162 480h10l4 420h-18z"/>
+      <path d="M136 520h62v5h-62zM144 546h46v4h-46z"/>
+    </g>
+  </svg>
+  <canvas id="fall" aria-hidden="true"></canvas>
+  <a class="skip" href="#about" data-t="skip">Skip to content</a>
+
+  <header class="top">
+    <a class="mark" href="#home">José Ángel García Pérez</a>
+    <nav aria-label="Main">
+      <a href="#about" data-t="navAbout">About</a>
+      <a href="#skills" data-t="navSkills">Skills</a>
+      <a href="#projects" data-t="navProjects">Projects</a>
+      <a href="#drop" data-t="navDrop">Your drop</a>
+      <a href="#contact" data-t="navContact">Contact</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="es">ES</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <h1>José Ángel<br>García Pérez</h1>
+        <p class="lead" data-t="heroLead">Software Systems Engineering student specializing in cloud computing, cloud security and AWS infrastructure.</p>
+        <p class="sub"><span data-t="heroSub">Open to jobs, internships and collaborations.</span>
+          <a class="plain" href="https://github.com/Josegas" target="_blank" rel="noopener">GitHub</a>
+          <a class="plain" href="https://www.linkedin.com/in/jose-angel-garcia-perez-976585395/" target="_blank" rel="noopener">LinkedIn</a>
+        </p>
+        <p class="actions">
+          <a class="cta" href="#projects" data-t="heroCta">See my projects</a>
+          <a class="cta ghost" href="#drop" data-t="heroCta2">Leave your drop</a>
+        </p>
+      </div>
+      <p class="vertical" lang="ja" aria-hidden="true">雲の一滴</p>
+      <p class="touch-hint" id="touchHint"><i aria-hidden="true"></i><span data-t="heroHint">Nobody has ever touched the cloud. Try it.</span></p>
+    </section>
+
+    <section class="block about" id="about">
+      <div class="story">
+        <h2 data-t="aboutTitle">I build secure, scalable solutions on the cloud.</h2>
+        <p data-t="about1">I'm in my ninth semester of Software Systems Engineering at the Instituto Tecnológico de Culiacán, focused on cloud architecture, cloud security and infrastructure on AWS.</p>
+        <p data-t="about2">I'm drawn to SecOps, DevSecOps and system design, and I learn through hands-on labs and real projects: serverless applications, data pipelines and AI agents deployed on AWS.</p>
+        <p data-t="about3">I got into technology because we can build almost anything to solve a real need. I stayed for the cloud: it can't be touched, and yet almost everything around us rests on it.</p>
+        <p class="offline" data-t="aboutOff">Away from the screen: Real Madrid, The Beatles, Luis Miguel, Michael Jackson, guitar, anime and training. And my family, above everything.</p>
+      </div>
+      <aside class="focus">
+        <h3 data-t="focusTitle">What I focus on</h3>
+        <ul>
+          <li data-t="f1">Cloud architecture on AWS</li>
+          <li data-t="f2">IAM and cloud security</li>
+          <li data-t="f3">VPC and infrastructure</li>
+          <li data-t="f4">SecOps and DevSecOps</li>
+          <li data-t="f5">System design</li>
+          <li data-t="f6">Data operations</li>
+        </ul>
+        <p class="where" data-t="where">Based in Culiacán, Mexico. Spanish and English (B2).</p>
+      </aside>
+    </section>
+
+    <section class="block skills" id="skills">
+      <h2 data-t="skillsTitle">Tech superpowers</h2>
+      <p class="intro" data-t="skillsIntro">Technologies I have used in real projects.</p>
+      <dl class="credits">
+        <div><dt>AWS</dt><dd>Amplify, Lambda, API Gateway, DynamoDB, S3, CloudFront, CloudWatch, Athena, Glue, Bedrock, Amazon Location Service</dd></div>
+        <div><dt data-t="cSec">Security</dt><dd data-t="cSecV">IAM, VPC, least privilege, AWS security services</dd></div>
+        <div><dt data-t="cIac">Infrastructure as code</dt><dd>Terraform, AWS CDK</dd></div>
+        <div><dt data-t="cOps">Automation and tools</dt><dd>Git, GitHub Actions, Docker</dd></div>
+        <div><dt data-t="cCode">Programming</dt><dd>Python, Java, PHP, JavaScript, SQL, HTML, CSS</dd></div>
+        <div><dt data-t="cFw">Frameworks</dt><dd>Laravel, Spring</dd></div>
+        <div><dt data-t="cData">Data and AI</dt><dd>MySQL, Pandas, NumPy, scikit-learn, PyTorch, XGBoost, Jupyter, Strands Agents</dd></div>
+        <div><dt data-t="cDocs">Analysis</dt><dd data-t="cDocsV">Requirements, use cases, diagrams, technical documentation</dd></div>
+        <div><dt data-t="cLang">Languages</dt><dd data-t="cLangV">Spanish, English B2</dd></div>
+      </dl>
+    </section>
+
+    <section class="block projects" id="projects">
+      <h2 data-t="projectsTitle">Projects</h2>
+      <div class="works">
+        <article class="main-work">
+          <h3>Una gota</h3>
+          <p data-t="p0">This portfolio. A serverless IoT system on AWS: each visitor's drop travels through an API to a real 2014 phone, and a queue holds it while the phone is off.</p>
+          <p class="role" data-t="p0r">Solo project: architecture, deployment and the phone client.</p>
+          <p class="stack">Amplify, API Gateway, Lambda, DynamoDB, CloudWatch, IAM, WebGL</p>
+          <p class="links"><a href="#drop" data-t="try">Try it</a> <a href="https://github.com/Josegas/Portfolio" target="_blank" rel="noopener" data-t="code">Code</a></p>
+        </article>
+        <article>
+          <h3>Refugio</h3>
+          <p data-t="p1">A walking-time map of cool refuges for older adults in three Mexican cities, built from open data on AWS and provisioned with Terraform.</p>
+          <p class="role" data-t="p1r">Solo project: data pipeline, infrastructure and map.</p>
+          <p class="stack">Terraform, Amazon S3, Athena, Glue, Amazon Location Service, Amplify, GitHub Actions, Python</p>
+          <p class="links"><a href="https://main.d6r3007drgrwp.amplifyapp.com" target="_blank" rel="noopener" data-t="live">Live site</a> <a href="https://github.com/Josegas/Refugio-mapa-de-refugios-contra-el-calor" target="_blank" rel="noopener" data-t="code">Code</a></p>
+        </article>
+        <article>
+          <h3>Al Tiempo</h3>
+          <p data-t="p2">An AI agent on AWS that tells families until what time cooked food is safe to eat. A tested rules engine decides, and the model only explains.</p>
+          <p class="role" data-t="p2r">Solo project: agent, rules engine, infrastructure and CI.</p>
+          <p class="stack">Python, Strands Agents, Amazon Bedrock, AWS CDK, Lambda, CloudFront, GitHub Actions, pytest</p>
+          <p class="links"><a href="https://d2mnz1h4b0sg0y.cloudfront.net" target="_blank" rel="noopener" data-t="live">Live site</a> <a href="https://github.com/Josegas/Al-Tiempo-Food-safety-for-when-the-cold-runs-out" target="_blank" rel="noopener" data-t="code">Code</a></p>
+        </article>
+        <article>
+          <h3 data-t="p5t">Hydrometeorological reconstruction</h3>
+          <p data-t="p5">Rebuilds missing values in historical records from weather stations in Sinaloa, comparing statistical and generative AI models on official SMN/CONAGUA data.</p>
+          <p class="role" data-t="p5r">Project in pairs. I worked on stages 1 to 7: data download, structuring, cleaning, normalization, dataset splits and PyTorch tensors.</p>
+          <p class="stack">Python, Pandas, NumPy, scikit-learn, PyTorch, XGBoost, Jupyter</p>
+          <p class="links"><a href="https://github.com/Josegas/Residencias_Imputacion_Generativa_Hidrometeorologica/tree/proyecto-completo" target="_blank" rel="noopener" data-t="code">Code</a></p>
+        </article>
+        <article>
+          <h3>NovaCode</h3>
+          <p data-t="p3">A logistics system for companies with several branches: register, assign and track shipments from origin to destination.</p>
+          <p class="role" data-t="p3r">Team project. My part: requirements, use cases, diagrams and documentation.</p>
+          <p class="stack">Vue, TypeScript, Kotlin, MySQL, Firebase</p>
+          <p class="links"><a href="https://frontend-iota-five-78.vercel.app" target="_blank" rel="noopener" data-t="live">Live site</a> <a href="https://github.com/NullPointerCorp/Frontend" target="_blank" rel="noopener">Frontend</a> <a href="https://github.com/NullPointerCorp/Backend" target="_blank" rel="noopener">Backend</a></p>
+        </article>
+        <article>
+          <h3>Te Acerco Salud</h3>
+          <p data-t="p4">A web and mobile platform that connects patients with a network of pharmacies so a prescription can be completed across them.</p>
+          <p class="role" data-t="p4r">Team project. My part: returning medicines to their original pharmacy.</p>
+          <p class="stack">Laravel, PHP, Blade, MySQL, REST API</p>
+          <p class="links"><a href="https://github.com/TasWebTeam/TasWebProject" target="_blank" rel="noopener" data-t="code">Code</a></p>
+        </article>
+        <article>
+          <h3>ManagEase</h3>
+          <p data-t="p6">A management system to streamline administrative processes, presented at the Feria de Ingenierías.</p>
+          <p class="role" data-t="p6r">Team project.</p>
+          <p class="stack">Java, Spring, MySQL</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="block dropzone" id="drop">
+      <div class="drop-copy">
+        <h2 data-t="dropTitle">Every cloud is made of drops. Leave yours.</h2>
+        <p data-t="drop1">This phone is real. It's from 2014, it sits in my room in Culiacán, and its screen is a small piece of this sky. Let go of a drop and it lands there, in the real world, wherever you are.</p>
+        <p class="status" id="status" role="status"></p>
+        <button class="release" id="release" type="button" data-t="dropBtn">Let go of a drop</button>
+        <p class="result" id="result" role="status"></p>
+        <p class="fine" data-t="dropFine">No accounts and no cookies. I only keep the drop's number, its time and your time zone.</p>
+      </div>
+      <figure class="phone" id="phone">
+        <div class="shell">
+          <img src="lg.webp" width="560" height="1084" alt="My real LG phone, photographed from the front">
+          <canvas id="screen" width="360" height="640" aria-label="Live view of the phone's screen"></canvas>
+        </div>
+        <figcaption><span data-t="phoneCap">This is the real phone. Its screen here mirrors the one in my room.</span> <span id="caption"></span></figcaption>
+      </figure>
+    </section>
+
+    <section class="block how" id="how">
+      <h2 data-t="howTitle">How this site runs on AWS</h2>
+      <div class="how-grid">
+        <div>
+          <h3 data-t="howPath">The path of a drop</h3>
+          <ol>
+            <li data-t="h1">AWS Amplify serves this page, and your browser calls an API Gateway endpoint.</li>
+            <li data-t="h2">A Lambda function counts the drop and stores it in a DynamoDB queue.</li>
+            <li data-t="h3">The phone asks for pending drops every 3 seconds, lands them and reports back.</li>
+            <li data-t="h4">CloudWatch records each step, with a dashboard and an error alarm.</li>
+          </ol>
+        </div>
+        <div>
+          <h3 data-t="howSec">Security decisions</h3>
+          <ul>
+            <li data-t="s1">The Lambda role reaches one DynamoDB table and its own logs, nothing else.</li>
+            <li data-t="s2">The phone authenticates with a token that never reaches the repository.</li>
+            <li data-t="s3">The API is limited to 20 requests per second and validates every input.</li>
+            <li data-t="s4">A dedicated IAM user without administrator access deploys the project.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block contact" id="contact">
+      <h2 data-t="contactTitle">Let's work together.</h2>
+      <p data-t="contact1">I'm open to jobs, internships and collaborations in cloud, security and software.</p>
+      <p class="reach">
+        <a href="mailto:joseangelgap@gmail.com">joseangelgap@gmail.com</a>
+        <a href="https://www.linkedin.com/in/jose-angel-garcia-perez-976585395/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/Josegas" target="_blank" rel="noopener">GitHub</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="end">
+    <p data-t="foot">The sky is painted live by your device. Hosted on AWS Amplify, with API Gateway, Lambda, DynamoDB and CloudWatch.</p>
+    <p><a href="https://github.com/Josegas/Portfolio" target="_blank" rel="noopener" data-t="footCode">Source code</a></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="sky.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
