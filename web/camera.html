@@ -7,16 +7,16 @@
 <title>Cámara de la gota</title>
 <style>
 body { margin: 0; background: #050b26; color: #fff; font: 16px/1.5 system-ui, sans-serif; text-align: center; }
-video { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #000; }
+video { display: block; width: 100%; max-height: 66vh; object-fit: contain; background: #000; }
 button { margin: 16px; padding: 12px 24px; font: 700 17px system-ui; border: 0; border-radius: 999px; cursor: pointer; }
 p { margin: 8px 16px; }
-#state { font-weight: 700; }
+#state { font-weight: 700; min-height: 3em; color: #ffd9a0; }
 </style>
 </head>
 <body>
 <video id="v" autoplay playsinline muted></video>
 <button id="go" type="button">Encender cámara</button>
-<p id="state">Apagada</p>
+<p id="state" role="status">Pulsa el botón y acepta el permiso de la cámara.</p>
 <p>Encuadra solo el LG. Solo se toma una foto cuando cae una gota, sin audio.</p>
 <canvas id="c" hidden></canvas>
 <script src="config.js"></script>
@@ -26,18 +26,27 @@ p { margin: 8px 16px; }
   var API = String((window.PORTFOLIO && window.PORTFOLIO.api) || '').replace(/\/+$/, '');
   var POLL_MS = 1500, WIDTH = 900;
   var video = document.getElementById('v'), canvas = document.getElementById('c');
-  var state = document.getElementById('state');
-  var taken = 0, wake = null;
+  var state = document.getElementById('state'), button = document.getElementById('go');
+  var taken = 0;
+
+  function say(text) { state.textContent = text; }
 
   var match = /[?&]t=([0-9a-fA-F]+)/.exec(location.search);
-  if (match) {
-    localStorage.setItem('cameraToken', match[1]);
-    history.replaceState(null, '', location.pathname);
-  }
-  var token = localStorage.getItem('cameraToken') || '';
+  try {
+    if (match) {
+      localStorage.setItem('cameraToken', match[1]);
+      history.replaceState(null, '', location.pathname);
+    }
+  } catch (e) { /* the token in memory is enough */ }
+  var token = match ? match[1] : '';
+  try { token = token || localStorage.getItem('cameraToken') || ''; } catch (e) { /* see above */ }
+
+  /* apps like WhatsApp open links in a browser that cannot ask for the camera */
+  var inApp = /WhatsApp|FBAN|FBAV|Instagram|; wv\)/i.test(navigator.userAgent);
+  if (inApp) say('Este navegador interno no puede usar la cámara. Abre este enlace en Chrome o Safari.');
 
   async function stayAwake() {
-    try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) { wake = null; }
+    try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch (e) { /* optional */ }
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) stayAwake(); });
 
@@ -67,6 +76,7 @@ p { margin: 8px 16px; }
   }
 
   async function loop() {
+    var wait = POLL_MS;
     try {
       var data = await send({ token: token });
       for (var i = 0; i < (data.shots || []).length; i++) {
@@ -74,25 +84,55 @@ p { margin: 8px 16px; }
         await send({ token: token, photo: { id: shot.id, jpeg: shoot(shot) } });
         taken++;
       }
-      state.textContent = 'En línea. Fotos tomadas: ' + taken;
+      say('Cámara lista y conectada a AWS. Fotos tomadas: ' + taken);
     } catch (e) {
-      state.textContent = e.message === 'token' ? 'Token inválido' : 'Sin conexión, reintentando';
+      say(e.message === 'token' ? 'El token no es válido. Vuelve a abrir el enlace completo.' : 'Sin conexión, reintentando.');
+      wait = 4000;
     }
-    setTimeout(loop, POLL_MS);
+    setTimeout(loop, wait);
   }
 
-  document.getElementById('go').addEventListener('click', async function () {
-    if (!token) { state.textContent = 'Falta el token en la URL'; return; }
+  function explain(err) {
+    if (err.name === 'NotAllowedError') return 'La cámara está bloqueada. Toca el ícono junto a la dirección, permite la cámara y recarga la página.';
+    if (err.name === 'NotFoundError') return 'Este dispositivo no tiene cámara disponible. Usa otro.';
+    if (err.name === 'NotReadableError') return 'Otra aplicación está usando la cámara. Ciérrala e inténtalo de nuevo.';
+    return 'No se pudo abrir la cámara (' + err.name + '). Prueba en Chrome o Safari.';
+  }
+
+  async function openCamera() {
     try {
-      video.srcObject = await navigator.mediaDevices.getUserMedia({
+      return await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
       });
-      this.hidden = true;
+    } catch (err) {
+      /* some webcams reject the size hints, so ask for any camera */
+      if (err.name === 'OverconstrainedError') return navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+      throw err;
+    }
+  }
+
+  button.addEventListener('click', async function () {
+    if (!token) { say('Falta el token. Abre el enlace completo que generaste con el comando.'); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      say('Este navegador no permite usar la cámara. Abre este enlace en Chrome o Safari.');
+      return;
+    }
+    say('Pidiendo permiso. Acepta el aviso de la cámara en tu navegador.');
+    var slow = setTimeout(function () {
+      say('El permiso no ha llegado. Busca el aviso cerca de la dirección. Si abriste el enlace desde WhatsApp, ábrelo en Chrome o Safari.');
+    }, 6000);
+    try {
+      video.srcObject = await openCamera();
+      clearTimeout(slow);
+      await video.play().catch(function () {});
+      button.hidden = true;
+      say('Cámara encendida. Conectando con AWS.');
       stayAwake();
       loop();
-    } catch (e) {
-      state.textContent = 'No se pudo abrir la cámara: ' + e.name;
+    } catch (err) {
+      clearTimeout(slow);
+      say(explain(err));
     }
   });
 })();

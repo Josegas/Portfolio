@@ -54,7 +54,8 @@
     drop1: 'Este teléfono es real. Es un LG de 2015, está en mi cuarto en Culiacán y su pantalla es un pedacito de este cielo. Suelta una gota y caerá ahí, en el mundo real, estés donde estés.',
     dropBtn: 'Soltar una gota',
     phoneCap: 'Este es el teléfono real. Su pantalla aquí refleja la que está en mi cuarto.',
-    dropFine: 'Sin cuentas y sin cookies. Solo guardo el número de la gota, su hora y tu zona horaria. Una cámara fotografía la pantalla del teléfono cuando cae una gota, y cada foto se borra a los 30 días.',
+    realCap: 'Grabado en mi cuarto: las gotas 4 y 5 cayendo en el teléfono real. Medido ahí, una gota tarda de 5 a 8 segundos en llegar.',
+    dropFine: 'Sin cuentas y sin cookies. Solo guardo el número de la gota, su hora y tu zona horaria. Cuando la cámara está encendida, fotografía la pantalla del teléfono al caer una gota, y cada foto se borra a los 30 días.',
     howTitle: 'Cómo corre este sitio en AWS',
     howIntro: 'Este diagrama está vivo. Cada número sale de tu propia gota.',
     n1: 'Tu navegador', n1t: 'Servido por AWS Amplify',
@@ -599,6 +600,19 @@
     }).then(function () {
       setTimeout(function () { btn.disabled = false; }, 1200);
     });
+  });
+
+  /* the real footage plays while it is on screen; a tap opens it full size */
+  var real = $('realVideo');
+  if (calm) {
+    real.controls = true;
+  } else if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) { var p = real.play(); if (p) p.catch(function () {}); } else real.pause();
+    }, { threshold: .35 }).observe(real);
+  }
+  real.addEventListener('click', function () {
+    if (real.requestFullscreen) real.requestFullscreen().catch(function () {});
   });
 
   /* start ------------------------------------------------------------------ */
