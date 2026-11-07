@@ -8,7 +8,7 @@
 
   var FRAG = [
     'precision highp float;',
-    'uniform vec2 R;uniform float T,D,G,C,V;uniform sampler2D N;uniform vec3 P[6];',
+    'uniform vec2 R;uniform float T,D,G,C,V,U;uniform sampler2D N;uniform vec3 P[6];',
     'const mat2 M=mat2(.8,.6,-.6,.8);',
     'float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return texture2D(N,(i+f+.5)/256.).r;}',
     'float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<4;i++){s+=a*n(p);p=M*p*2.03+7.1;a*=.5;}return s;}',
@@ -83,6 +83,14 @@
     ' vec3 cR=k(vec3(1.,.97,.84),vec3(1.,.84,.52),vec3(1.,.66,.36),vec3(.52,.64,1.),vec3(1.,.9,.7),d);',
 
     ' vec3 lightDir=normalize(vec3(sun-vec2(.3*A,.0),.55));',
+
+    /* the aurora: long curtains of light, drawn behind the clouds */
+    ' if(U>.01){float wv=fbm(vec2(uv.x*1.5+T*.05,T*.05));',
+    '  float ay=uv.y-.2-wv*.34;',
+    '  float cur=.45+.55*sin(uv.x*52.+fbm(vec2(uv.x*7.,T*.16))*16.);',
+    '  float up=exp(-max(ay,0.)*5.5)*smoothstep(-.03,.0,ay);',
+    '  vec3 ac=mix(vec3(.12,1.,.58),vec3(.66,.24,1.),smoothstep(.0,.32,ay));',
+    '  c+=ac*up*cur*U*1.15;c+=vec3(.08,.42,.3)*exp(-ay*ay*14.)*U*.32;}',
 
     /* a contrail crossing the sky */
     ' {float ph=fract(T/95.);vec2 st=vec2(-.72*A,-.02),en=vec2(.86*A,.42);vec2 pl=mix(st,en,ph);',
@@ -187,11 +195,11 @@
 
     noiseTexture(gl);
     var u = {};
-    ['R', 'T', 'D', 'G', 'C', 'V'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
+    ['R', 'T', 'D', 'G', 'C', 'V', 'U'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
     u.P = gl.getUniformLocation(prog, 'P');
 
     var state = {
-      day: 0, target: 0, grow: 0, growTarget: 0, mass: 1, veil: 0, veilTarget: 0,
+      day: 0, target: 0, grow: 0, growTarget: 0, mass: 1, veil: 0, veilTarget: 0, aurora: 0, auroraTarget: 0,
       scale: opts.scale || 1,
       trail: new Float32Array(18),
       head: 0, last: 0, frames: 0, spent: 0, tick: 0, every: 2,
@@ -215,6 +223,7 @@
       state.day += (state.target - state.day) * 0.14;
       state.grow += (state.growTarget - state.grow) * 0.14;
       state.veil += (state.veilTarget - state.veil) * 0.14;
+      state.aurora += (state.auroraTarget - state.aurora) * 0.07;
       for (var i = 2; i < 18; i += 3) state.trail[i] *= 0.984;
       gl.uniform2f(u.R, canvas.width, canvas.height);
       gl.uniform1f(u.T, t);
@@ -222,6 +231,7 @@
       gl.uniform1f(u.G, state.grow);
       gl.uniform1f(u.C, state.mass);
       gl.uniform1f(u.V, state.veil);
+      gl.uniform1f(u.U, state.aurora);
       gl.uniform3fv(u.P, state.trail);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
@@ -254,6 +264,7 @@
       setGrow: function (g) { state.growTarget = g; },
       setVeil: function (v) { state.veilTarget = v; },
       setMass: function (m) { state.mass = m; },
+      setAurora: function (a) { state.auroraTarget = a; },
       touch: function (x, y) {
         var uvx = (x - canvas.clientWidth / 2) / canvas.clientHeight;
         var uvy = (canvas.clientHeight / 2 - y) / canvas.clientHeight;

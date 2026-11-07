@@ -213,6 +213,7 @@
 
   /* the sky follows the page ------------------------------------------- */
   var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var auroraOn = false, stormOn = false;
   var sky = null;
   try { sky = window.Sky && window.Sky($('sky')); } catch (e) { sky = null; }
   if (!sky) $('sky').style.display = 'none';
@@ -257,9 +258,10 @@
     var t = b.y > a.y ? ease((y - a.y) / (b.y - a.y)) : 0;
     var day = a.d + (b.d - a.d) * t;
     if (sky) {
-      sky.setDay(day);
+      var v = a.v + (b.v - a.v) * t;
+      sky.setDay(auroraOn ? .76 : day);
       sky.setGrow(a.g + (b.g - a.g) * t);
-      sky.setVeil(a.v + (b.v - a.v) * t);
+      sky.setVeil(auroraOn ? Math.min(v, .15) : stormOn ? Math.max(v, 1.25) : v);
       if (calm) sky.frame(20);
     }
     $('wires').style.opacity = Math.max(0, Math.min(1, (day - .56) / .16));
@@ -305,7 +307,7 @@
     renderSecrets();
     toast(say('sec_' + id));
     plink();
-    if (isNew && foundCount() >= SECRET_TOTAL) setTimeout(function () { toast(say('secretsDone')); }, 5200);
+    if (isNew && foundCount() >= SECRET_TOTAL) setTimeout(reward, 2600);
   }
   function place(id, x, y, on) {
     var s = $(id);
@@ -333,8 +335,19 @@
     $(p[0]).addEventListener('click', function () { discover(p[1]); });
   });
   $('secrets').addEventListener('click', function () {
-    toast(foundCount() >= SECRET_TOTAL ? say('secretsDone') : say('secretsHint'));
+    if (foundCount() >= SECRET_TOTAL) reward(); else toast(say('secretsHint'));
   });
+  /* five secrets found: the day turns to night, an aurora opens and gold falls */
+  function reward() {
+    toast(say('secretsDone'));
+    if (calm || !sky || auroraOn) return;
+    auroraOn = true;
+    sky.setAurora(1);
+    onScroll();
+    startRain(7000, true, 2);
+    setTimeout(function () { sky.setAurora(0); }, 8500);
+    setTimeout(function () { auroraOn = false; onScroll(); }, 10500);
+  }
 
   /* sound: off until the visitor asks for it ----------------------------- */
   var soundOn = false, audio = null;
@@ -441,6 +454,66 @@
     g.addColorStop(0, '#fff'); g.addColorStop(.55, '#bcd3ff'); g.addColorStop(1, '#6d92ff');
     fc.fillStyle = g; fc.fill();
   }
+  /* rain across the whole page */
+  var drops = [], splashes = [], rainUntil = 0, rainGold = false, rainDensity = 3, raining = false, rainLast = 0;
+  function startRain(ms, gold, density) {
+    rainUntil = performance.now() + ms;
+    rainGold = gold;
+    rainDensity = density;
+    if (raining) return;
+    raining = true;
+    rainLast = performance.now();
+    requestAnimationFrame(stepRain);
+  }
+  function stepRain(now) {
+    var w = innerWidth, h = innerHeight, dt = Math.min(.05, (now - rainLast) / 1000), i;
+    rainLast = now;
+    fc.clearRect(0, 0, w, h);
+    if (now < rainUntil) {
+      for (i = 0; i < rainDensity; i++) {
+        drops.push({ x: Math.random() * w * 1.1, y: -30 - Math.random() * 90, v: 950 + Math.random() * 750, len: 16 + Math.random() * 30, a: .3 + Math.random() * .55 });
+      }
+    }
+    fc.lineCap = 'round';
+    fc.lineWidth = 2;
+    for (i = drops.length - 1; i >= 0; i--) {
+      var d = drops[i];
+      d.y += d.v * dt;
+      d.x -= d.v * dt * .07;
+      fc.strokeStyle = (rainGold ? 'rgba(255,221,150,' : 'rgba(205,224,255,') + d.a + ')';
+      fc.beginPath(); fc.moveTo(d.x, d.y); fc.lineTo(d.x + d.len * .07, d.y - d.len); fc.stroke();
+      if (d.y > h - 70 - d.a * 90) {
+        if (Math.random() < .5) splashes.push({ x: d.x, y: d.y, t: now });
+        drops.splice(i, 1);
+      }
+    }
+    for (i = splashes.length - 1; i >= 0; i--) {
+      var s = splashes[i], age = (now - s.t) / 620;
+      if (age >= 1) { splashes.splice(i, 1); continue; }
+      fc.strokeStyle = (rainGold ? 'rgba(255,221,150,' : 'rgba(210,228,255,') + (.6 * (1 - age)) + ')';
+      fc.lineWidth = 1.3;
+      fc.beginPath(); fc.ellipse(s.x, s.y, 3 + age * 24, 1 + age * 7, 0, 0, Math.PI * 2); fc.stroke();
+    }
+    if (now < rainUntil || drops.length || splashes.length) { requestAnimationFrame(stepRain); return; }
+    fc.clearRect(0, 0, w, h);
+    raining = false;
+  }
+  /* the drop really reached the phone: the visitor's whole page answers */
+  function celebrate() {
+    ripple();
+    if (calm) return;
+    var f = $('flash');
+    f.classList.remove('on');
+    void f.offsetWidth;
+    f.classList.add('on');
+    startRain(4600, false, 10);
+    stormOn = true;
+    onScroll();
+    setTimeout(function () { stormOn = false; onScroll(); }, 4400);
+    setTimeout(function () { ripples.push({ x: 120, y: 500, t: performance.now() }); }, 280);
+    setTimeout(function () { ripples.push({ x: 245, y: 380, t: performance.now() }); }, 560);
+  }
+
   function phoneInView() {
     var b = screen.getBoundingClientRect();
     return b.top < innerHeight * .8 && b.bottom > innerHeight * .2;
@@ -614,7 +687,7 @@
     (function poll() {
       fetch(API + '/api/drop/' + id, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
         if (d.landedAt) {
-          ripple();
+          celebrate();
           var secs = (Math.max(d.landedMs, 0) / 1000).toFixed(1);
           step('phone', secs + ' s');
           report(say('landed', { n: num(n), s: secs, ask: say('ask' + kind) }));

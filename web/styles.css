@@ -226,6 +226,11 @@ pre { margin: 12px 0 0; padding: 14px 16px; overflow-x: auto; font: 13px/1.55 ui
 .tile p { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--soft); }
 .tile.gold { border-color: var(--gold); }
 
+/* the moment a drop lands -------------------------------------------- */
+.flash { position: fixed; inset: 0; z-index: 29; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 60%, rgba(210, 228, 255, .75), rgba(120, 160, 255, .2) 62%, transparent); }
+.flash.on { animation: flash .9s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
 /* secrets ------------------------------------------------------------ */
 .spot { position: fixed; left: 0; top: 0; z-index: 15; display: none; width: 68px; height: 68px; margin: -34px 0 0 -34px; padding: 0; background: none; border: 0; border-radius: 50%; cursor: pointer; }
 .spot.on { display: block; }
