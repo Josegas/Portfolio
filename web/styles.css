@@ -165,8 +165,12 @@ h3 { font-family: var(--serif); font-weight: 700; }
 /* how it runs ------------------------------------------------------ */
 .how h2 { margin-bottom: .2em; }
 .how .intro { margin-bottom: 2.4em; }
-.trace { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: relative; }
-.trace::before { content: ""; position: absolute; left: 9px; right: 16.6%; top: 8px; height: 2px; background: rgba(255, 255, 255, .3); }
+.trace { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: relative; }
+.trace [data-step="s3"] { display: none; }
+.trace.with-photo { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.trace.with-photo [data-step="s3"] { display: block; }
+.trace::before { content: ""; position: absolute; left: 9px; right: 20%; top: 8px; height: 2px; background: rgba(255, 255, 255, .3); }
+.trace.with-photo::before { right: 16.6%; }
 .trace li { position: relative; padding: 30px 10px 0 0; line-height: 1.35; }
 .trace i { position: absolute; left: 0; top: 0; width: 18px; height: 18px; border-radius: 50%; background: #1a2560; border: 2px solid rgba(255, 255, 255, .55); transition: background .25s, box-shadow .25s; }
 .trace li.lit i { background: var(--gold); border-color: #fff; box-shadow: 0 0 22px var(--gold); }

@@ -302,16 +302,29 @@ async function repsCall(event) {
   if (!KINDS.includes(body.kind) || !Number.isInteger(n) || n < 1 || n > 100) {
     return reply(400, { error: 'bad reps' });
   }
-  const { Attributes } = await ddb.send(new UpdateCommand({
-    TableName: TABLE,
-    Key: META,
-    UpdateExpression: 'ADD #d :n',
-    ExpressionAttributeNames: { '#d': `done_${body.kind}` },
-    ExpressionAttributeValues: { ':n': n },
-    ReturnValues: 'ALL_NEW'
-  }));
-  metric('RepsDone', n, 'Count', { kind: body.kind });
-  return reply(200, { reps: repsOf(Attributes) });
+  const { Item } = await ddb.send(new GetCommand({ TableName: TABLE, Key: META, ConsistentRead: true }));
+  const done = Item?.[`done_${body.kind}`] || 0;
+  const owed = Item?.[`owed_${body.kind}`] || 0;
+  /* nobody can mark as done what no visitor has asked for */
+  if (done + n > owed) return reply(409, { error: 'more than requested', reps: repsOf(Item) });
+
+  /* the condition stops two tabs from counting the same practice twice */
+  try {
+    const { Attributes } = await ddb.send(new UpdateCommand({
+      TableName: TABLE,
+      Key: META,
+      UpdateExpression: 'SET #d = :next',
+      ConditionExpression: done ? '#d = :prev' : 'attribute_not_exists(#d)',
+      ExpressionAttributeNames: { '#d': `done_${body.kind}` },
+      ExpressionAttributeValues: done ? { ':next': done + n, ':prev': done } : { ':next': n },
+      ReturnValues: 'ALL_NEW'
+    }));
+    metric('RepsDone', n, 'Count', { kind: body.kind });
+    return reply(200, { reps: repsOf(Attributes) });
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') return reply(409, { error: 'changed, try again' });
+    throw err;
+  }
 }
 
 async function cameraCall(event) {

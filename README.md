@@ -36,7 +36,7 @@ flowchart LR
 
 ## Every drop puts me to practice
 
-The visitor chooses what the drop asks of me: one push-up, one minute of guitar or one minute of studying AWS. The site shows a public scoreboard of what I owe and what I have done. A private page, authenticated with the same token, records practice that was really done.
+The visitor chooses what the drop asks of me: one push-up, one minute of guitar or one minute of studying AWS. The site shows a public scoreboard of what I owe and what I have done. A private page, authenticated with the same token, records practice that was really done, and the API refuses to mark more than visitors have asked for.
 
 ## How a drop travels
 
@@ -46,7 +46,7 @@ The visitor chooses what the drop asks of me: one push-up, one minute of guitar 
 4. The phone reports the delivery. Lambda stores the landing time, and the visitor's page shows it.
 5. If the camera page is running, it photographs the phone's screen and the visitor sees the real photo of their drop.
 
-Measured on the real phone with the page open: 6 drops landed in 5.3 to 7.9 seconds. Six earlier drops waited in the queue for up to 64 minutes while the phone was off, and all of them landed.
+Measured on the real phone with the page open: drops landed in 5.3 to 8.7 seconds. Six earlier drops waited in the queue for up to 64 minutes while the phone was off, and all of them landed.
 
 If the phone is off, the drop stays in the queue and lands when the phone wakes up. Nothing is lost, and the page says the phone is asleep. It never invents a status.
 

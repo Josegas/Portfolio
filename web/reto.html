@@ -11,6 +11,7 @@ h1 { font-size: 22px; margin: 0 0 14px; }
 .row { background: #0e1a55; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
 .row b { display: block; font-size: 19px; }
 button { margin: 8px 8px 0 0; padding: 12px 20px; font: 700 17px sans-serif; border: 0; border-radius: 999px; }
+button[disabled] { opacity: .35; }
 #info { min-height: 1.5em; color: #ffd9a0; font-weight: 700; }
 </style>
 </head>
@@ -49,12 +50,14 @@ button { margin: 8px 8px 0 0; padding: 12px 20px; font: 700 17px sans-serif; bor
     Object.keys(NAMES).forEach(function (k) {
       var row = document.createElement('div'), b = document.createElement('b');
       row.className = 'row';
+      var left = reps[k].owed - reps[k].done;
       b.textContent = NAMES[k] + ': ' + reps[k].done + ' de ' + reps[k].owed;
       row.appendChild(b);
       [1, 5, 10].forEach(function (n) {
         var btn = document.createElement('button');
         btn.textContent = '+' + n;
         btn.type = 'button';
+        btn.disabled = n > left;
         btn.addEventListener('click', function () { add(k, n); });
         row.appendChild(btn);
       });
@@ -65,6 +68,7 @@ button { margin: 8px 8px 0 0; padding: 12px 20px; font: 700 17px sans-serif; bor
     info.textContent = 'Guardando...';
     call('POST', '/api/reps', { token: token, kind: kind, n: n }, function (status, d) {
       if (status === 200 && d) { render(d.reps); info.textContent = 'Guardado.'; }
+      else if (status === 409) { if (d && d.reps) render(d.reps); info.textContent = 'No puedes registrar más de lo que te han pedido.'; }
       else info.textContent = status === 401 ? 'Token inválido. Abre el enlace completo.' : 'No se pudo guardar.';
     });
   }

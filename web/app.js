@@ -23,7 +23,7 @@
     f4: 'SecOps y DevSecOps', f5: 'Diseño de sistemas', f6: 'Operaciones de datos',
     where: 'Radico en Culiacán, México. Español e inglés (B2).',
     skillsTitle: 'Superpoderes técnicos',
-    skillsIntro: 'Tecnologías que he usado en proyectos reales.',
+    skillsIntro: 'Las tecnologías con las que trabajo.',
     cSec: 'Seguridad', cSecV: 'IAM, VPC, mínimo privilegio, servicios de seguridad de AWS',
     cIac: 'Infraestructura como código', cOps: 'Automatización y herramientas', cCode: 'Programación',
     cFw: 'Frameworks', cData: 'Datos e IA',
@@ -63,7 +63,7 @@
     tTrain: 'Entrenar', t5: 'Me gusta cuidar mi cuerpo. Si arriba pediste una lagartija, la hago de verdad.',
     tFamily: 'Familia', t6: 'Amo a mi familia y haría todo por ellos.',
     phoneCap: 'Este es el teléfono real. Su pantalla aquí refleja la que está en mi cuarto.',
-    realCap: 'Grabado en mi cuarto: las gotas 4 y 5 cayendo en el teléfono real. Medido ahí, una gota tarda de 5 a 8 segundos en llegar.',
+    realCap: 'Grabado en mi cuarto: las gotas 4 y 5 cayendo en el teléfono real. Medido ahí, una gota tarda de 5 a 9 segundos en llegar.',
     dropFine: 'Sin cuentas y sin cookies. Solo guardo el número de la gota, su hora y tu zona horaria. Cuando la cámara está encendida, fotografía la pantalla del teléfono al caer una gota, y cada foto se borra a los 30 días.',
     howTitle: 'Cómo corre este sitio en AWS',
     howIntro: 'Este diagrama está vivo. Cada número sale de tu propia gota.',
@@ -450,6 +450,8 @@
     ds.className = awake ? 'awake' : '';
 
     renderReps();
+    /* the photo step only exists while a camera is running or a photo was taken */
+    $('trace').classList.toggle('with-photo', !!(state.cameraOnline || state.lastPhoto));
     if (count == null) return;
     $('caption').textContent = count === 0 ? say('first') :
       say(count === 1 ? 'countOne' : state.places <= 1 ? 'countPlace' : 'count', { n: num(count), p: num(state.places) });
